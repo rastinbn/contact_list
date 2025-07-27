@@ -1,12 +1,27 @@
 <?php
 require "../connection/config.php";
 require_once "function.php";
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
+    header("Location: ../src/users/login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
 function clean_phone_number($number) {
     $number = trim($number);
     $number = preg_replace('/^\+98/', '', $number);
     $number = preg_replace('/[^\d]/', '', $number);
     return $number;
 }
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     $file_tmp = $_FILES['csv_file']['tmp_name'];
     if (($handle = fopen($file_tmp, "r")) !== FALSE) {
@@ -32,15 +47,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                         $clean_phones[] = $clean_phone;
                     }
                 }
-                $stmt_contact = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact) VALUES (?, ?)");
+                
+                // Insert contact with user_id
+                $stmt_contact = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, user_id) VALUES (?, ?, ?)");
                 if (!$stmt_contact) {
                     throw new Exception("Prepare failed (contacts_info): " . $conn->error);
                 }
-                $stmt_contact->bind_param("ss", $first_name, $last_name);
+                $stmt_contact->bind_param("ssi", $first_name, $last_name, $user_id);
                 $stmt_contact->execute();
                 $contact_id = $stmt_contact->insert_id;
                 $stmt_contact->close();
-                $stmt_number = $conn->prepare("SELECT contact_id FROM contact_numbers WHERE number_contact = ?");
+                
+                // Check for duplicate phone numbers for this user only
+                $stmt_number = $conn->prepare("SELECT cn.contact_id FROM contact_numbers cn 
+                                             JOIN contacts_info ci ON cn.contact_id = ci.id_contact 
+                                             WHERE cn.number_contact = ? AND ci.user_id = ?");
                 if (!$stmt_number) {
                     throw new Exception("Prepare failed (select contact_numbers): " . $conn->error);
                 }
@@ -49,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                     throw new Exception("Prepare failed (insert contact_numbers): " . $conn->error);
                 }
                 foreach ($clean_phones as $phone) {
-                    $stmt_number->bind_param("s", $phone);
+                    $stmt_number->bind_param("si", $phone, $user_id);
                     $stmt_number->execute();
                     $stmt_number->store_result();
                     if ($stmt_number->num_rows > 0) {
@@ -65,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             }
 
             $conn->commit();
-            header("location : ../src/index.php");
+            header("location: ../src/index.php");
 
         } catch (Exception $e) {
             $conn->rollback();
@@ -80,6 +101,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
 } else {
     die("Invalid request.");
 }
-/*/1- ساخت پروفایل و عکس برای هر مخاطب /**/
-/*/2- ساخت یوزر ها برای اینکه هر یوزر مخاطب های خودش رو داشته باشه /**/
-/*/3- ساخت یک شبکه اینترانت که مثلا بگه این مخاطبم برای این یوزر هم میتونه فعال باشه /**/
+?>

@@ -10,12 +10,14 @@ function sanitize($input) {
     $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
     return $input;
 }
+
 function normalize_phone($phone) {
     $phone = trim($phone);
     $phone = preg_replace('/^\+98/', '', $phone);
     $phone = preg_replace('/[^0-9]/', '', $phone); 
     return $phone;
 }
+
 function handle_image_upload($file) {
     if (!$file || !isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
         return [null, null];
@@ -42,20 +44,21 @@ function handle_image_upload($file) {
 
     return ['uploads/' . $new_name, null]; // Return relative path and no error
 }
-function save_contact($conn, $first_name, $last_name, $numbers, $image_path) {
+
+function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $user_id) {
     // Insert contact info
     if ($image_path !== null) {
-        $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, photo_contact) VALUES (?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, photo_contact, user_id) VALUES (?, ?, ?, ?)");
         if ($stmt === false) {
             return [0, "<div class='alert alert-danger success-alert'>Prepare failed: " . htmlspecialchars($conn->error) . "</div>"];
         }
-        $stmt->bind_param("sss", $first_name, $last_name, $image_path);
+        $stmt->bind_param("sssi", $first_name, $last_name, $image_path, $user_id);
     } else {
-        $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact) VALUES (?, ?)");
+        $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, user_id) VALUES (?, ?, ?)");
         if ($stmt === false) {
             return [0, "<div class='alert alert-danger success-alert'>Prepare failed: " . htmlspecialchars($conn->error) . "</div>"];
         }
-        $stmt->bind_param("ss", $first_name, $last_name);
+        $stmt->bind_param("ssi", $first_name, $last_name, $user_id);
     }
     if (!$stmt->execute()) {
         return [0, "<div class='alert alert-danger success-alert'>Database error on insert: " . htmlspecialchars($stmt->error) . "</div>"];
@@ -74,20 +77,31 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path) {
     return [$id, null];
 }
 
-function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path) {
+function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path, $user_id) {
+    // First check if contact belongs to user
+    $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
+    $check_stmt->bind_param("ii", $id, $user_id);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        return "<div class='alert alert-danger'>Contact not found or access denied.</div>";
+    }
+    $check_stmt->close();
+
     // Update contact info
     if ($image_path !== null) {
-        $stmt = $conn->prepare("UPDATE contacts_info SET firstname_contact = ?, lastname_contact = ?, photo_contact = ? WHERE id_contact = ?");
+        $stmt = $conn->prepare("UPDATE contacts_info SET firstname_contact = ?, lastname_contact = ?, photo_contact = ? WHERE id_contact = ? AND user_id = ?");
         if ($stmt === false) {
             return "<div class='alert alert-danger'>Prepare failed: " . htmlspecialchars($conn->error) . "</div>";
         }
-        $stmt->bind_param("sssi", $first_name, $last_name, $image_path, $id);
+        $stmt->bind_param("sssii", $first_name, $last_name, $image_path, $id, $user_id);
     } else {
-        $stmt = $conn->prepare("UPDATE contacts_info SET firstname_contact = ?, lastname_contact = ? WHERE id_contact = ?");
+        $stmt = $conn->prepare("UPDATE contacts_info SET firstname_contact = ?, lastname_contact = ? WHERE id_contact = ? AND user_id = ?");
         if ($stmt === false) {
             return "<div class='alert alert-danger'>Prepare failed: " . htmlspecialchars($conn->error) . "</div>";
         }
-        $stmt->bind_param("ssi", $first_name, $last_name, $id);
+        $stmt->bind_param("ssii", $first_name, $last_name, $id, $user_id);
     }
 
     if (!$stmt->execute()) {
@@ -107,47 +121,44 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
     return null;
 }
 
-function delete_contact($conn, $id) {
-    // Also delete the image file if it exists
-    $stmt = $conn->prepare("SELECT photo_contact FROM contacts_info WHERE id_contact = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        if (!empty($row['photo_contact']) && file_exists('../' . $row['photo_contact'])) {
-            unlink('../' . $row['photo_contact']);
-        }
-    }
-    $stmt->close();
-
-    // Delete contact from database
-    $stmt = $conn->prepare("DELETE FROM contacts_info WHERE id_contact = ?");
-    $stmt->bind_param("i", $id);
-    if (!$stmt->execute()) {
-        return "<div class='alert alert-danger'>Failed to delete contact.</div>";
-    }
-    $stmt->close();
+function delete_contact($conn, $id, $user_id) {
+    // First check if contact belongs to user
+    $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
+    $check_stmt->bind_param("ii", $id, $user_id);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
     
-    // Also delete associated numbers
-    $stmt = $conn->prepare("DELETE FROM contact_numbers WHERE contact_id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
+    if ($result->num_rows === 0) {
+        return "<div class='alert alert-danger'>Contact not found or access denied.</div>";
+    }
+    $check_stmt->close();
+
+    // Delete contact (cascade will handle numbers)
+    $stmt = $conn->prepare("DELETE FROM contacts_info WHERE id_contact = ? AND user_id = ?");
+    if ($stmt === false) {
+        return "<div class='alert alert-danger'>Prepare failed: " . htmlspecialchars($conn->error) . "</div>";
+    }
+    $stmt->bind_param("ii", $id, $user_id);
+    
+    if (!$stmt->execute()) {
+        return "<div class='alert alert-danger'>Database error on delete: " . htmlspecialchars($stmt->error) . "</div>";
+    }
     $stmt->close();
 
     return null;
 }
 
-function search_contacts($conn, $query) {
+function search_contacts($conn, $query, $user_id) {
     $query = "%{$query}%";
     $stmt = $conn->prepare(
         "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
          FROM contacts_info c
          LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
-         WHERE c.firstname_contact LIKE ? OR c.lastname_contact LIKE ?
+         WHERE (c.firstname_contact LIKE ? OR c.lastname_contact LIKE ?) AND c.user_id = ?
          GROUP BY c.id_contact
          ORDER BY c.firstname_contact, c.lastname_contact"
     );
-    $stmt->bind_param("ss", $query, $query);
+    $stmt->bind_param("ssi", $query, $query, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = [];
@@ -162,14 +173,18 @@ function search_contacts($conn, $query) {
     return $contacts;
 }
 
-function get_all_contacts($conn) {
+function get_all_contacts($conn, $user_id) {
     $sql = "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
             FROM contacts_info c
             LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
+            WHERE c.user_id = ?
             GROUP BY c.id_contact
             ORDER BY c.firstname_contact, c.lastname_contact";
 
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
     $contacts = [];
 
     if ($result && $result->num_rows > 0) {
@@ -178,8 +193,10 @@ function get_all_contacts($conn) {
             $contacts[] = $row;
         }
     }
+    $stmt->close();
     return $contacts;
 }
+
 function render_contact_row($contact, $index)
 {
     $id = htmlspecialchars($contact['id_contact']);
@@ -233,3 +250,4 @@ function render_contact_row($contact, $index)
         </tr>
     ";
 }
+?>

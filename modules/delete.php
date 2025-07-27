@@ -1,22 +1,37 @@
 <?php
-require_once "../connection/config.php";
+require "../connection/config.php";
+require "security.php";
 require_once "function.php";
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['id'])) {
-    // Redirect or show error if accessed directly or without ID
-    header("Location: ../src/index.php");
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
+    echo "<div class='alert alert-danger'>Please login to manage contacts.</div>";
     exit;
 }
 
-$id = intval($_POST['id']);
-$error = delete_contact($conn, $id);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo "<div class='alert alert-danger'>Invalid request.</div>";
+    exit;
+}
 
+$user_id = $_SESSION['user_id'];
+$id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+
+if ($id <= 0) {
+    echo "<div class='alert alert-danger'>Invalid contact ID.</div>";
+    exit;
+}
+
+$error = delete_contact($conn, $id, $user_id);
 if ($error) {
-  
-    header("Location: ../src/index.php?error=" . urlencode($error));
+    echo $error;
 } else {
-    // Success, redirect back to the main page
-    header("Location: ../src/index.php");
+    echo "<div class='alert alert-success'>Contact deleted successfully.</div>";
 }
 
 $conn->close();

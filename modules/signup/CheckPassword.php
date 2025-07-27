@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!preg_match('/[A-Z]/', $password)) {
         $requirements[] = 'At least one uppercase letter';
-    }
+}
     if (!preg_match('/[a-z]/', $password)) {
         $requirements[] = 'At least one lowercase letter';
     }

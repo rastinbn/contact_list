@@ -27,7 +27,6 @@ function createUser($username, $email, $password, $confirmPassword) {
         $response['message'] = 'Username must be between 3 and 50 characters';
         return $response;
     }
-    
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
         $response['success'] = false;
         $response['message'] = 'Username can only contain letters, numbers, and underscores';
@@ -55,7 +54,15 @@ function createUser($username, $email, $password, $confirmPassword) {
         return $response;
     }
     
+
+    
     $stmt = $conn->prepare("SELECT id FROM contacts_user WHERE username = ?");
+    if (!$stmt) {
+        $response['success'] = false;
+        $response['message'] = 'Database error: ' . $conn->error;
+        return $response;
+    }
+    
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -69,6 +76,12 @@ function createUser($username, $email, $password, $confirmPassword) {
     $stmt->close();
     
     $stmt = $conn->prepare("SELECT id FROM contacts_user WHERE email = ?");
+    if (!$stmt) {
+        $response['success'] = false;
+        $response['message'] = 'Database error: ' . $conn->error;
+        return $response;
+    }
+    
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -84,16 +97,21 @@ function createUser($username, $email, $password, $confirmPassword) {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     
     $stmt = $conn->prepare("INSERT INTO contacts_user (username, email, password) VALUES (?, ?, ?)");
+    if (!$stmt) {
+        $response['success'] = false;
+        $response['message'] = 'Database error: ' . $conn->error;
+        return $response;
+    }
+    
     $stmt->bind_param("sss", $username, $email, $hashedPassword);
     
     if ($stmt->execute()) {
         $response['success'] = true;
         $response['message'] = 'User registered successfully!';
         $response['user_id'] = $stmt->insert_id;
-        header("location : ");
     } else {
         $response['success'] = false;
-        $response['message'] = 'Registration failed. Please try again.';
+        $response['message'] = 'Registration failed: ' . $stmt->error;
     }
     
     $stmt->close();

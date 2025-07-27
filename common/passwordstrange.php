@@ -11,29 +11,25 @@ class PasswordStrange
     public function isStrange() {
         $width = 0;
         
-        // Length check (8+ characters)
         if (strlen($this->password) >= 8) {
             $width += 25;
-        }
-        
-        // Uppercase letters check
+       }
+
         if (preg_match('/[A-Z]/', $this->password)) {
             $width += 25;
-        }
-        
-        // Lowercase letters check
+       }
+
         if (preg_match('/[a-z]/', $this->password)) {
             $width += 25;
-        }
+       }
         
-        // Numbers check
         if (preg_match('/[0-9]/', $this->password)) {
             $width += 25;
-        }
+      }
         
         return $width;
     }
-    
+
     public function getWeakPoints() {
         $issues = [];
         
@@ -73,7 +69,7 @@ class PasswordStrange
     }
     
     public function isValid() {
-        return $this->isStrange() >= 50; // At least 50% strength required
+        return $this->isStrange() >= 50;
     }
 }
 ?>

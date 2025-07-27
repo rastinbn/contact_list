@@ -7,20 +7,42 @@ function createUser(formData) {
         success: function(response) {
             if (response.success) {
                 // Show success message
-                showAlert('success', response.message);
+                showAlert('success', response.message + ' Redirecting to login page...');
                 
                 // Redirect to login page after 2 seconds
                 setTimeout(() => {
-                    window.location.href = '../index.php';
+                    window.location.href = 'login.php';
                 }, 2000);
             } else {
                 // Show error message
                 showAlert('danger', response.message);
             }
+            
+            // Re-enable submit button
+            $("#submit").prop('disabled', false).text('Create Account');
         },
         error: function(xhr, status, error) {
-            showAlert('danger', 'An error occurred. Please try again.');
-            console.error('Error:', error);
+            console.error('AJAX Error:', xhr.responseText);
+            
+            let errorMessage = 'An error occurred. Please try again.';
+            
+            // Try to parse error response
+            try {
+                const response = JSON.parse(xhr.responseText);
+                if (response.message) {
+                    errorMessage = response.message;
+                }
+            } catch (e) {
+                // If not JSON, show the raw response
+                if (xhr.responseText) {
+                    errorMessage = 'Server Error: ' + xhr.responseText.substring(0, 100);
+                }
+            }
+            
+            showAlert('danger', errorMessage);
+            
+            // Re-enable submit button
+            $("#submit").prop('disabled', false).text('Create Account');
         }
     });
 }
@@ -74,18 +96,17 @@ function showAlert(type, message) {
     // Add new alert
     $(".card-body").prepend(alertHtml);
     
-    // Auto-dismiss after 5 seconds
+    // Auto-dismiss after 8 seconds for errors, 5 seconds for success
+    const dismissTime = type === 'danger' ? 8000 : 5000;
     setTimeout(() => {
         $(".alert").fadeOut();
-    }, 5000);
+    }, dismissTime);
 }
-
 function validateForm() {
     const username = $("[name='username']").val().trim();
     const email = $("[name='email']").val().trim();
     const password = $("[name='password']").val();
     const confirmPassword = $("[name='ConfirmPassword']").val();
-    
     // Basic validation
     if (!username) {
         showAlert('danger', 'Username is required');
@@ -181,7 +202,9 @@ $(() => {
                         }
                     }
                 }
-            }, "json");
+            }, "json").fail(function(xhr, status, error) {
+                console.error('Password check failed:', error);
+            });
         }
     });
     

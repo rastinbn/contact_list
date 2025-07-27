@@ -3,17 +3,30 @@ require "../connection/config.php";
 require "security.php";
 require_once "function.php";
 
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
+    echo "<div class='alert alert-danger'>Please login to manage contacts.</div>";
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo "<div class='alert alert-danger'>Invalid request.</div>";
     exit;
 }
 
+$user_id = $_SESSION['user_id'];
+
 // Sanitize inputs
 $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 $first_name = clean_input($_POST['first_name'] ?? '', 50);
 $last_name = clean_input($_POST['last_name'] ?? '', 50);
 $numbers = $_POST['number'] ?? [];
+
 // Validate inputs
 if (empty($first_name) || empty($last_name)) {
     echo "<div class='alert alert-danger'>First and Last names are required.</div>";
@@ -50,7 +63,7 @@ if ($error) {
 // Save or update the contact
 if ($id > 0) {
     // Update existing contact
-    $error = update_contact($conn, $id, $first_name, $last_name, $clean_numbers, $image_path);
+    $error = update_contact($conn, $id, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
     if ($error) {
         echo $error;
     } else {
@@ -58,7 +71,7 @@ if ($id > 0) {
     }
 } else {
     // Create new contact
-    list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path);
+    list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
     if ($error) {
         echo $error;
     } else {

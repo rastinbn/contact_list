@@ -50,6 +50,9 @@
     </div>
     <div class="card-footer text-end">
         <button type="button" class="btn btn-success" id="submit" name="signUpSubmit" form="SignUpForm">Create Account</button>
+        <div class="mt-2 text-center">
+            <small>Already have an account? <a href="login.php">Login here</a></small>
+        </div>
     </div>
 </div>
 </div>

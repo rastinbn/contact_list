@@ -1,3 +1,9 @@
+<?php
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,32 +16,28 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">Navbar</a>
+        <a class="navbar-brand" href="#">Contact List</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="../src/index.php">Home</a>
+                    <a class="nav-link active" aria-current="page" href="../src/index.php">My Contacts</a>
                 </li>
-
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Dropdown
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Action</a></li>
-                        <li><a class="dropdown-item" href="#">Another action</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Something else here</a></li>
-                    </ul>
-                </li>
-
+                <?php endif; ?>
             </ul>
-            <div class="d-flex gap-2">
-            <a href="../src/users/signup.php" class="btn btn-dark">Sign Up</a>
-            <a href="" class="btn btn-outline-dark">Login</a>
+            <div class="d-flex gap-2 align-items-center">
+                <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
+                    <span class="navbar-text me-3">
+                        Welcome, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>!
+                    </span>
+                    <a href="../modules/login/LogoutUser.php" class="btn btn-outline-danger">Logout</a>
+                <?php else: ?>
+                    <a href="../src/users/signup.php" class="btn btn-dark">Sign Up</a>
+                    <a href="../src/users/login.php" class="btn btn-outline-dark">Login</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
