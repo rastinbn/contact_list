@@ -1,0 +1,70 @@
+<?php
+require "../connection/config.php";
+require "security.php";
+require_once "function.php";
+require_once "sanitization.php";
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo "<div class='alert alert-danger'>Invalid request.</div>";
+    exit;
+}
+
+// Sanitize inputs
+$id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+$first_name = clean_input($_POST['first_name'] ?? '', 50);
+$last_name = clean_input($_POST['last_name'] ?? '', 50);
+$numbers = $_POST['number'] ?? [];
+// Validate inputs
+if (empty($first_name) || empty($last_name)) {
+    echo "<div class='alert alert-danger'>First and Last names are required.</div>";
+    exit;
+}
+if (!validate_name($first_name) || !validate_name($last_name)) {
+    echo "<div class='alert alert-danger'>Name must be alphabetic and 2-50 chars long.</div>";
+    exit;
+}
+
+$clean_numbers = [];
+foreach ($numbers as $num) {
+    if (empty($num)) continue;
+    $clean = clean_phone($num);
+    if (!is_valid_phone($clean)) {
+        echo "<div class='alert alert-danger'>Invalid phone number format: " . htmlspecialchars($num) . "</div>";
+        exit;
+    }
+    $clean_numbers[] = $clean;
+}
+
+if (empty($clean_numbers)) {
+    echo "<div class='alert alert-danger'>At least one valid phone number is required.</div>";
+    exit;
+}
+
+// Handle image upload
+list($image_path, $error) = handle_image_upload($_FILES['contact_image'] ?? null);
+if ($error) {
+    echo $error;
+    exit;
+}
+
+// Save or update the contact
+if ($id > 0) {
+    // Update existing contact
+    $error = update_contact($conn, $id, $first_name, $last_name, $clean_numbers, $image_path);
+    if ($error) {
+        echo $error;
+    } else {
+        echo "<div class='alert alert-success'>Contact updated successfully.</div>";
+    }
+} else {
+    // Create new contact
+    list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path);
+    if ($error) {
+        echo $error;
+    } else {
+        echo "<div class='alert alert-success'>Contact saved successfully.</div>";
+    }
+}
+
+$conn->close();
+?>
