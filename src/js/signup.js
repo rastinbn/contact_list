@@ -27,11 +27,11 @@ function updateBarColor(width) {
         $(".password-status").html("<small class='text-danger mt-1 '>your password is too weak</small>")
     } else {
         $(".bar").css("background-color", "transparent");
+        $(".password-status").html("");
 
     }
 }
 
-// Function to animate bar width
 function animateBarWidth(newWidth) {
     $(".bar").animate({
         width: newWidth + "%"
@@ -41,7 +41,6 @@ function animateBarWidth(newWidth) {
     });
 }
 
-// Function to add pulse effect
 function addPulseEffect() {
     $(".bar").addClass("pulse-animation");
     setTimeout(() => {
@@ -50,7 +49,6 @@ function addPulseEffect() {
 }
 
 $(() => {
-    // Add CSS styles for animations
     $("<style>")
         .prop("type", "text/css")
         .html(`
@@ -87,11 +85,9 @@ $(() => {
             previousWidth = width;
             width = parseInt(res) || 0;
             
-            // Animate width change
             animateBarWidth(width);
             $(".bar").attr("data-width", `${width}`);
             
-            // Update color with delay to match animation
             setTimeout(() => {
                 updateBarColor(width);
                 
@@ -106,11 +102,9 @@ $(() => {
     $(password).on("focus", function (){
         previousWidth = width;
         width = 0;
-        // Animate to zero
         animateBarWidth(0);
         $(".bar").attr("data-width", "0");
         
-        // Reset color
         setTimeout(() => {
             updateBarColor(0);
         }, 300);

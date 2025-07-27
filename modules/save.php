@@ -2,7 +2,7 @@
 require "../connection/config.php";
 require "security.php";
 require_once "function.php";
-require_once "sanitization.php";
+
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo "<div class='alert alert-danger'>Invalid request.</div>";

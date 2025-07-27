@@ -17,9 +17,8 @@ function normalize_phone($phone) {
     return $phone;
 }
 function handle_image_upload($file) {
-    // A more robust check to ensure a file was actually uploaded.
     if (!$file || !isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
-        return [null, null]; // No file uploaded, which is not an error.
+        return [null, null];
     }
     if ($file['error'] !== UPLOAD_ERR_OK) {
         return [null, "<div class='alert alert-danger success-alert'>Error uploading image. Code: {$file['error']}</div>"];
