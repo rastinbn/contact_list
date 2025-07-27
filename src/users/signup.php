@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>Sign Up - Contact List</title>
     <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="../css/signup.css">
 </head>
@@ -16,26 +16,40 @@
 <div class="container mt-3">
 <div class="card">
     <div class="card-header bg-dark">
-        <h1 class="card-title text-white">Sign up</h1>
+        <h1 class="card-title text-white">Sign Up</h1>
     </div>
     <div class="card-body">
         <form action="" class="form-control" method="post" id="SignUpForm">
-            <label for="" class="form-label">User name:</label>
-            <input type="text" class="form-control" name="username">
-            <label for="" class="form-label">Email:</label>
-            <input type="email" class="form-control" name="email">
-            <label for="" class="form-label">Password:</label>
-            <input type="text" class="form-control" name="password">
-            <label for="" class="form-label">Confirm Password:</label>
-            <input type="text" class="form-control" name="ConfirmPassword">
-                <div class="bar-container">
-                <div class="bar"></div>
+            <div class="mb-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" class="form-control" name="username" id="username" required>
+                <div class="form-text">Username must be 3-50 characters and can contain letters, numbers, and underscores.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" class="form-control" name="email" id="email" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" class="form-control" name="password" id="password" required>
+                <div class="bar-container mt-2">
+                    <div class="bar"></div>
                     <div class="password-status"></div>
                 </div>
+
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password:</label>
+                <input type="password" class="form-control" name="ConfirmPassword" id="confirmPassword" required>
+                <div class="password-match"></div>
+            </div>
         </form>
     </div>
     <div class="card-footer text-end">
-        <button type="button" class="btn btn-success" id="submit" name="signUpSubmit" form="SignUpForm">Submit</button>
+        <button type="button" class="btn btn-success" id="submit" name="signUpSubmit" form="SignUpForm">Create Account</button>
     </div>
 </div>
 </div>
