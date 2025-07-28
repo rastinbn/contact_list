@@ -72,7 +72,6 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
                 <button type="button" id="add-number" class="btn btn-sm btn-info mt-1">Add Number</button>
             </form>
         </div>
-
         <div class="card-footer">
             <button class="btn btn-success" form="form1" type="submit">Submit</button>
             <button class="btn btn-danger" id="cancel">Cancel</button>

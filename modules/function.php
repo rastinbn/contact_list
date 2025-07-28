@@ -24,7 +24,6 @@ function handle_image_upload($file) {
     if ($file['error'] !== UPLOAD_ERR_OK) {
         return [null, "<div class='alert alert-danger success-alert'>Error uploading image. Code: {$file['error']}</div>"];
     }
-
     $allowed_types = ['image/jpeg', 'image/png','image/jpg'];
     if (!in_array($file['type'], $allowed_types)) {
         return [null, "<div class='alert alert-danger success-alert'>Invalid image format. Only JPG, PNG, GIF allowed.</div>"];
