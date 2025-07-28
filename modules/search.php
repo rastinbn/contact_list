@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['search'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$query = ($_POST['search']);
+$query = trim($_POST['search']);
 
 if (empty($query)) {
     $contacts = get_all_contacts($conn, $user_id);

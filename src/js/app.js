@@ -5,7 +5,7 @@ function load_countries() {
     });
 }
 function search_contacts(query) {
-    $.post('../modules/search.php', { query: query }, function (data) {
+    $.post('../modules/search.php', { search: query }, function (data) {
         $("#table_body").html(data);
     });
 }

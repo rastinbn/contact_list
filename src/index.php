@@ -1,10 +1,8 @@
 <?php
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
     header("Location: users/login.php");
     exit();
@@ -30,7 +28,7 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
 
         </div>
         <div class="card-body">
-            <form class="form-control bg-transparent border-0 d-flex flex-row align-items-center gap-3 mb-3" method="post">
+            <form class="form-control bg-transparent border-0 d-flex flex-row align-items-center gap-3 mb-3">
                 <label class="form-label">Search:</label>
                 <input type="search" name="search" class="form-control" placeholder="Search by first or last name">
             </form>

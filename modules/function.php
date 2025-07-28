@@ -10,7 +10,6 @@ function sanitize($input) {
     $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
     return $input;
 }
-
 function normalize_phone($phone) {
     $phone = trim($phone);
     $phone = preg_replace('/^\+98/', '', $phone);
@@ -77,7 +76,6 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
 }
 
 function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path, $user_id) {
-    // First check if contact belongs to user
     $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
     $check_stmt->bind_param("ii", $id, $user_id);
     $check_stmt->execute();
@@ -107,7 +105,6 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
     }
     $stmt->close();
 
-    // Delete old numbers and insert new ones
     $conn->query("DELETE FROM contact_numbers WHERE contact_id = $id");
     $stmt = $conn->prepare("INSERT INTO contact_numbers (contact_id, number_contact) VALUES (?, ?)");
     foreach ($numbers as $number) {
@@ -120,7 +117,6 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
 }
 
 function delete_contact($conn, $id, $user_id) {
-    // First check if contact belongs to user
     $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
     $check_stmt->bind_param("ii", $id, $user_id);
     $check_stmt->execute();
@@ -131,7 +127,6 @@ function delete_contact($conn, $id, $user_id) {
     }
     $check_stmt->close();
 
-    // Delete contact (cascade will handle numbers)
     $stmt = $conn->prepare("DELETE FROM contacts_info WHERE id_contact = ? AND user_id = ?");
     if ($stmt === false) {
         return "<div class='alert alert-danger'>Prepare failed: " . htmlspecialchars($conn->error) . "</div>";
@@ -224,9 +219,7 @@ function render_contact_row($contact, $index)
             <a href='#' title='Telegram (Not Linkable)' class='text-muted'><i class='fab fa-telegram fs-4'></i></a>
         ";
     }
-    // Numbers
     $numbers_html = implode("<br>", array_map('htmlspecialchars', $contact['numbers_array']));
-    // Action Icons
     $actions_html = "
         <a href='#' class='text-primary edit-btn' title='Edit' data-id='{$id}' data-fname='{$fname}' data-lname='{$lname}' data-numbers='{$numbers_json}'>
             <i class='fa fa-edit fa-fw fs-5'></i>
