@@ -4,36 +4,27 @@ require_once "../function.php";
 
 header('Content-Type: application/json');
 
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Function to authenticate user
 function authenticateUser($username, $password, $remember = false) {
     global $conn;
-    
     $response = array();
-    
-    // Sanitize inputs
     $username = sanitize(trim($username));
     $password = trim($password);
     
-    // Validation
     if (empty($username) || empty($password)) {
         $response['success'] = false;
         $response['message'] = 'Username/email and password are required';
         return $response;
     }
     
-    // Check if input is email or username
     $isEmail = filter_var($username, FILTER_VALIDATE_EMAIL);
     
     if ($isEmail) {
-        // Search by email
         $stmt = $conn->prepare("SELECT id, username, email, password FROM contacts_user WHERE email = ?");
     } else {
-        // Search by username
         $stmt = $conn->prepare("SELECT id, username, email, password FROM contacts_user WHERE username = ?");
     }
     
@@ -57,21 +48,17 @@ function authenticateUser($username, $password, $remember = false) {
     $user = $result->fetch_assoc();
     $stmt->close();
     
-    // Verify password
     if (password_verify($password, $user['password'])) {
-        // Password is correct, create session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['logged_in'] = true;
         $_SESSION['login_time'] = time();
         
-        // Set remember me cookie if requested
         if ($remember) {
             $token = bin2hex(random_bytes(32));
-            $expires = time() + (30 * 24 * 60 * 60); // 30 days
+            $expires = time() + (30 * 24 * 60 * 60);
             
-            // Store remember token in database (you might want to add a remember_token column)
             $stmt = $conn->prepare("UPDATE contacts_user SET remember_token = ? WHERE id = ?");
             if ($stmt) {
                 $stmt->bind_param("si", $token, $user['id']);
@@ -79,7 +66,6 @@ function authenticateUser($username, $password, $remember = false) {
                 $stmt->close();
             }
             
-            // Set cookie
             setcookie('remember_token', $token, $expires, '/', '', true, true);
         }
         
@@ -98,7 +84,6 @@ function authenticateUser($username, $password, $remember = false) {
     return $response;
 }
 
-// Handle POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';

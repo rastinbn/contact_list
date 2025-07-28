@@ -29,7 +29,6 @@ class PasswordStrange
         
         return $width;
     }
-
     public function getWeakPoints() {
         $issues = [];
         

@@ -42,7 +42,7 @@ function handle_image_upload($file) {
         return [null, "<div class='alert alert-danger success-alert'>Failed to move uploaded image.</div>"];
     }
 
-    return ['uploads/' . $new_name, null]; // Return relative path and no error
+    return ['uploads/' . $new_name, null];
 }
 
 function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $user_id) {
@@ -66,7 +66,6 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
     $id = $stmt->insert_id;
     $stmt->close();
 
-    // Insert contact numbers
     $stmt = $conn->prepare("INSERT INTO contact_numbers (contact_id, number_contact) VALUES (?, ?)");
     foreach ($numbers as $number) {
         $stmt->bind_param("is", $id, $number);
@@ -89,7 +88,6 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
     }
     $check_stmt->close();
 
-    // Update contact info
     if ($image_path !== null) {
         $stmt = $conn->prepare("UPDATE contacts_info SET firstname_contact = ?, lastname_contact = ?, photo_contact = ? WHERE id_contact = ? AND user_id = ?");
         if ($stmt === false) {

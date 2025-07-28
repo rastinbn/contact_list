@@ -2,12 +2,10 @@
 require "../connection/config.php";
 require_once "function.php";
 
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
     header("Location: ../src/users/login.php");
     exit();
@@ -48,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                     }
                 }
                 
-                // Insert contact with user_id
                 $stmt_contact = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, user_id) VALUES (?, ?, ?)");
                 if (!$stmt_contact) {
                     throw new Exception("Prepare failed (contacts_info): " . $conn->error);
@@ -58,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 $contact_id = $stmt_contact->insert_id;
                 $stmt_contact->close();
                 
-                // Check for duplicate phone numbers for this user only
                 $stmt_number = $conn->prepare("SELECT cn.contact_id FROM contact_numbers cn 
                                              JOIN contacts_info ci ON cn.contact_id = ci.id_contact 
                                              WHERE cn.number_contact = ? AND ci.user_id = ?");

@@ -66,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!preg_match('/[0-9]/', $password)) {
         $requirements[] = 'At least one number';
     }
-    
     $response['requirements'] = $requirements;
     
     echo json_encode($response);

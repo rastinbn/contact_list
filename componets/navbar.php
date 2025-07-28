@@ -1,5 +1,4 @@
 <?php
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -35,7 +34,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     </span>
                     <a href="../modules/login/LogoutUser.php" class="btn btn-outline-danger">Logout</a>
                 <?php else: ?>
-                    <a href="../src/users/signup.php" class="btn btn-dark">Sign Up</a>
+                    <a href="signup.php" class="btn btn-dark">Sign Up</a>
                     <a href="../src/users/login.php" class="btn btn-outline-dark">Login</a>
                 <?php endif; ?>
             </div>

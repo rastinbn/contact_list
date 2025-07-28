@@ -2,12 +2,10 @@
 require_once "../connection/config.php";
 require_once "function.php";
 
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
     echo "<tr><td colspan='7' class='text-center text-danger'>Please login to search contacts.</td></tr>";
     exit();
@@ -19,13 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['search'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$query = trim($_POST['search']);
+$query = ($_POST['search']);
 
 if (empty($query)) {
-    // If search is empty, show all contacts for this user
     $contacts = get_all_contacts($conn, $user_id);
 } else {
-    // Search contacts for this user
     $contacts = search_contacts($conn, $query, $user_id);
 }
 

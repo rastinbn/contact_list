@@ -53,16 +53,13 @@ if (empty($clean_numbers)) {
     exit;
 }
 
-// Handle image upload
 list($image_path, $error) = handle_image_upload($_FILES['contact_image'] ?? null);
 if ($error) {
     echo $error;
     exit;
 }
 
-// Save or update the contact
 if ($id > 0) {
-    // Update existing contact
     $error = update_contact($conn, $id, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
     if ($error) {
         echo $error;
@@ -70,7 +67,6 @@ if ($id > 0) {
         echo "<div class='alert alert-success'>Contact updated successfully.</div>";
     }
 } else {
-    // Create new contact
     list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
     if ($error) {
         echo $error;

@@ -5,7 +5,6 @@ require_once "../../common/passwordstrange.php";
 
 header('Content-Type: application/json');
 
-// Function to create user with proper validation and security
 function createUser($username, $email, $password, $confirmPassword) {
     global $conn;
     
