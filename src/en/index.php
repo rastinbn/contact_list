@@ -13,15 +13,14 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
 <head>
     <meta charset="UTF-8">
     <title>Contacts App</title>
-    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="stylesheet" href="../node_modules/animate.css/animate.css">
+    <link rel="stylesheet" href="../../node_modules/animate.css/animate.css">
 </head>
 <body>
-<?php include "../componets/navbar.php"?>
+<?php include "../../componets/navbar.php"?>
 <div class="container">
-
     <div class="card mt-3" id="show_contacts">
 
         <div class="card-header"><h1>Contacts</h1>
@@ -32,7 +31,7 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
                 <label class="form-label">Search:</label>
                 <input type="search" name="search" class="form-control" placeholder="Search by first or last name">
             </form>
-            <table class="table table-light">
+            <table class="table table-light table-responsive">
                 <thead class="table-dark">
                 <tr>
                     <th>#</th>
@@ -49,7 +48,7 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
         </div>
         <div class="card-footer">
             <button class="btn btn-primary" id="add">Add Contact</button>
-            <a href="../modules/export.php" class="btn btn-success">Export CSV</a>
+            <a href="../../modules/export.php" class="btn btn-success">Export CSV</a>
             <button id="import" class="btn btn-secondary">Import</button>
         </div>
     </div>
@@ -92,8 +91,8 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
     </div>
 </div>
 <div id="message" class="mt-3 text-center"></div>
-<script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
-<script src="../node_modules/jquery/dist/jquery.min.js"></script>
-<script  src="js/app.js"></script>
+<script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+<script src="../../node_modules/jquery/dist/jquery.min.js"></script>
+<script  src="../js/app.js"></script>
 </body>
 </html>

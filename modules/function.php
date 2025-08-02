@@ -40,10 +40,22 @@ function handle_image_upload($file) {
         return [null, "<div class='alert alert-danger success-alert'>Failed to move uploaded image.</div>"];
     }
 
-    return ['uploads/' . $new_name, null];
+    return ['../../uploads/' . $new_name, null];
 }
 
 function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $user_id) {
+    // حذف شماره‌های تکراری
+    $clean_numbers = [];
+    foreach ($numbers as $num) {
+        if (empty($num)) continue;
+        $clean = normalize_phone($num);
+        if (!is_valid_phone($clean)) {
+            echo "<div class='alert alert-danger'>Invalid phone number format: " . htmlspecialchars($num) . "</div>";
+            exit;
+        }
+        $clean_numbers[] = $clean;
+    }
+    $clean_numbers = array_unique($clean_numbers);
     // Insert contact info
     if ($image_path !== null) {
         $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, photo_contact, user_id) VALUES (?, ?, ?, ?)");
@@ -65,7 +77,7 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
     $stmt->close();
 
     $stmt = $conn->prepare("INSERT INTO contact_numbers (contact_id, number_contact) VALUES (?, ?)");
-    foreach ($numbers as $number) {
+    foreach ($clean_numbers as $number) {
         $stmt->bind_param("is", $id, $number);
         $stmt->execute();
     }
@@ -75,6 +87,18 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
 }
 
 function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path, $user_id) {
+    // حذف شماره‌های تکراری
+    $clean_numbers = [];
+    foreach ($numbers as $num) {
+        if (empty($num)) continue;
+        $clean = normalize_phone($num);
+        if (!is_valid_phone($clean)) {
+            echo "<div class='alert alert-danger'>Invalid phone number format: " . htmlspecialchars($num) . "</div>";
+            exit;
+        }
+        $clean_numbers[] = $clean;
+    }
+    $clean_numbers = array_unique($clean_numbers);
     $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
     $check_stmt->bind_param("ii", $id, $user_id);
     $check_stmt->execute();
@@ -106,7 +130,7 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
 
     $conn->query("DELETE FROM contact_numbers WHERE contact_id = $id");
     $stmt = $conn->prepare("INSERT INTO contact_numbers (contact_id, number_contact) VALUES (?, ?)");
-    foreach ($numbers as $number) {
+    foreach ($clean_numbers as $number) {
         $stmt->bind_param("is", $id, $number);
         $stmt->execute();
     }
@@ -198,8 +222,8 @@ function render_contact_row($contact, $index)
 
     // Avatar Logic
     $photo_path = $contact['photo_contact'];
-    if (!empty($photo_path) && file_exists('../' . $photo_path)) {
-        $avatar_html = "<img src='../" . htmlspecialchars($photo_path) . "' alt='Contact Image' width='50' height='50' class='img-thumbnail rounded-circle'>";
+    if (!empty($photo_path) && file_exists('../uploads' . $photo_path)) {
+        $avatar_html = "<img src='" . htmlspecialchars($photo_path) . "' alt='Contact Image' width='50' height='50' class='img-thumbnail rounded-circle'>";
     } else {
         $char = strtoupper(mb_substr($fname, 0, 1));
         $color = get_random_color();

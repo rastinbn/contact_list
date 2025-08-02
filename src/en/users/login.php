@@ -6,13 +6,13 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Login - Contact List</title>
-    <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="../../../node_modules/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="../css/signup.css">
 </head>
 
 <body>
 
-<?php include "../../componets/navbar.php"?>
+<?php include "../../../componets/navbar.php"?>
 <div class="container mt-3">
 <div class="card">
     <div class="card-header bg-dark">
@@ -44,8 +44,8 @@
     </div>
 </div>
 </div>
-<script src="../../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
-<script src="../../node_modules/jquery/dist/jquery.min.js"></script>
-<script src="../js/login.js"></script>
+<script src="../../../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+<script src="../../../node_modules/jquery/dist/jquery.min.js"></script>
+<script src="../../js/login.js"></script>
 </body>
 </html>

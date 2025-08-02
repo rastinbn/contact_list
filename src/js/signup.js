@@ -1,6 +1,6 @@
 function createUser(formData) {
     $.ajax({
-        url: "../../modules/signup/CreatUser.php",
+        url: "../../../modules/signup/CreatUser.php",
         method: "POST",
         data: formData,
         dataType: "json",
@@ -171,7 +171,7 @@ $(() => {
         const confirmPasswordVal = confirmPassword.val();
         
         if (passwordVal) {
-            $.post("../../modules/signup/CheckPassword.php", {
+            $.post("../../../modules/signup/CheckPassword.php", {
                 password: passwordVal,
                 ConfirmPassword: confirmPasswordVal
             }, function(response) {

@@ -1,11 +1,12 @@
 
+
 function load_countries() {
-    $.get('../modules/load.php', function (data) {
+    $.get('../../modules/load.php', function (data) {
         $("#table_body").html(data);
     });
 }
 function search_contacts(query) {
-    $.post('../modules/search.php', { search: query }, function (data) {
+    $.post('../../modules/search.php', { search: query }, function (data) {
         $("#table_body").html(data);
     });
 }
@@ -62,7 +63,7 @@ $(document).ready(function () {
     $("#form1").submit(function (e) {
         e.preventDefault();
         const action = $("#action").val();
-        const url = action === "delete" ? "../modules/delete.php" : "../modules/save.php";
+        const url = action === "delete" ? "../../modules/delete.php" : "../../modules/save.php";
 
         // Use FormData to handle file uploads
         var formData = new FormData(this);

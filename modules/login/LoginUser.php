@@ -13,15 +13,12 @@ function authenticateUser($username, $password, $remember = false) {
     $response = array();
     $username = sanitize(trim($username));
     $password = trim($password);
-    
     if (empty($username) || empty($password)) {
         $response['success'] = false;
         $response['message'] = 'Username/email and password are required';
         return $response;
     }
-    
     $isEmail = filter_var($username, FILTER_VALIDATE_EMAIL);
-    
     if ($isEmail) {
         $stmt = $conn->prepare("SELECT id, username, email, password FROM contacts_user WHERE email = ?");
     } else {
@@ -48,7 +45,7 @@ function authenticateUser($username, $password, $remember = false) {
     $user = $result->fetch_assoc();
     $stmt->close();
     
-    if (password_verify($password, $user['password'])) {
+    if (sha1($password) === $user['password']) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];

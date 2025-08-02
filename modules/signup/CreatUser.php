@@ -2,9 +2,7 @@
 require_once "../../connection/config.php";
 require_once "../function.php";
 require_once "../../common/passwordstrange.php";
-
 header('Content-Type: application/json');
-
 function createUser($username, $email, $password, $confirmPassword) {
     global $conn;
     
@@ -20,7 +18,6 @@ function createUser($username, $email, $password, $confirmPassword) {
         $response['message'] = 'All fields are required';
         return $response;
     }
-    
     if (strlen($username) < 3 || strlen($username) > 50) {
         $response['success'] = false;
         $response['message'] = 'Username must be between 3 and 50 characters';
@@ -92,9 +89,7 @@ function createUser($username, $email, $password, $confirmPassword) {
         return $response;
     }
     $stmt->close();
-    
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    
+    $hashedPassword = sha1($password);
     $stmt = $conn->prepare("INSERT INTO contacts_user (username, email, password) VALUES (?, ?, ?)");
     if (!$stmt) {
         $response['success'] = false;

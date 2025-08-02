@@ -1,6 +1,6 @@
 function loginUser(formData) {
     $.ajax({
-        url: "../../modules/login/LoginUser.php",
+        url: "../../../modules/login/LoginUser.php",
         method: "POST",
         data: formData,
         dataType: "json",

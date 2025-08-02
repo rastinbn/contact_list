@@ -8,13 +8,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['ConfirmPassword'] ?? '';
     
-    // Sanitize inputs
     $password = trim($password);
     $confirmPassword = trim($confirmPassword);
     
     $response = array();
     
-    // Check if password is provided
     if (empty($password)) {
         $response['success'] = false;
         $response['width'] = 0;
@@ -52,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $response['color'] = 'red';
     }
     
-    // Add password requirements feedback
     $requirements = array();
     if (strlen($password) < 8) {
         $requirements[] = 'At least 8 characters';
