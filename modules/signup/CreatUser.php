@@ -2,9 +2,11 @@
 require_once "../../connection/config.php";
 require_once "../function.php";
 require_once "../../common/passwordstrange.php";
+
 header('Content-Type: application/json');
+
 function createUser($username, $email, $password, $confirmPassword) {
-    global $conn;
+    global $conn, $lang;
     
     $response = array();
     
@@ -15,29 +17,30 @@ function createUser($username, $email, $password, $confirmPassword) {
     
     if (empty($username) || empty($email) || empty($password) || empty($confirmPassword)) {
         $response['success'] = false;
-        $response['message'] = 'All fields are required';
+        $response['message'] = $lang['required_field'];
         return $response;
     }
+    
     if (strlen($username) < 3 || strlen($username) > 50) {
         $response['success'] = false;
-        $response['message'] = 'Username must be between 3 and 50 characters';
+        $response['message'] = $lang['username_length'];
         return $response;
     }
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
         $response['success'] = false;
-        $response['message'] = 'Username can only contain letters, numbers, and underscores';
+        $response['message'] = $lang['username_invalid_chars'];
         return $response;
     }
     
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $response['success'] = false;
-        $response['message'] = 'Please enter a valid email address';
+        $response['message'] = $lang['invalid_email'];
         return $response;
     }
     
     if ($password !== $confirmPassword) {
         $response['success'] = false;
-        $response['message'] = 'Passwords do not match';
+        $response['message'] = $lang['passwords_not_match'];
         return $response;
     }
     
@@ -46,7 +49,7 @@ function createUser($username, $email, $password, $confirmPassword) {
     
     if ($strength < 50) {
         $response['success'] = false;
-        $response['message'] = 'Password is too weak. Please use a stronger password';
+        $response['message'] = $lang['password_weak'];
         return $response;
     }
     
@@ -55,7 +58,7 @@ function createUser($username, $email, $password, $confirmPassword) {
     $stmt = $conn->prepare("SELECT id FROM contacts_user WHERE username = ?");
     if (!$stmt) {
         $response['success'] = false;
-        $response['message'] = 'Database error: ' . $conn->error;
+        $response['message'] = $lang['database_error'] . ': ' . $conn->error;
         return $response;
     }
     
@@ -65,7 +68,7 @@ function createUser($username, $email, $password, $confirmPassword) {
     
     if ($result->num_rows > 0) {
         $response['success'] = false;
-        $response['message'] = 'Username already exists';
+        $response['message'] = $lang['username_exists'];
         $stmt->close();
         return $response;
     }
@@ -74,7 +77,7 @@ function createUser($username, $email, $password, $confirmPassword) {
     $stmt = $conn->prepare("SELECT id FROM contacts_user WHERE email = ?");
     if (!$stmt) {
         $response['success'] = false;
-        $response['message'] = 'Database error: ' . $conn->error;
+        $response['message'] = $lang['database_error'] . ': ' . $conn->error;
         return $response;
     }
     
@@ -84,16 +87,18 @@ function createUser($username, $email, $password, $confirmPassword) {
     
     if ($result->num_rows > 0) {
         $response['success'] = false;
-        $response['message'] = 'Email already exists';
+        $response['message'] = $lang['email_exists'];
         $stmt->close();
         return $response;
     }
     $stmt->close();
-    $hashedPassword = sha1($password);
+    
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    
     $stmt = $conn->prepare("INSERT INTO contacts_user (username, email, password) VALUES (?, ?, ?)");
     if (!$stmt) {
         $response['success'] = false;
-        $response['message'] = 'Database error: ' . $conn->error;
+        $response['message'] = $lang['database_error'] . ': ' . $conn->error;
         return $response;
     }
     
@@ -101,11 +106,11 @@ function createUser($username, $email, $password, $confirmPassword) {
     
     if ($stmt->execute()) {
         $response['success'] = true;
-        $response['message'] = 'User registered successfully!';
+        $response['message'] = $lang['signup_success'];
         $response['user_id'] = $stmt->insert_id;
     } else {
         $response['success'] = false;
-        $response['message'] = 'Registration failed: ' . $stmt->error;
+        $response['message'] = $lang['signup_failed'] . ': ' . $stmt->error;
     }
     
     $stmt->close();

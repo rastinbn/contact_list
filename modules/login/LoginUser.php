@@ -9,16 +9,19 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 function authenticateUser($username, $password, $remember = false) {
-    global $conn;
+    global $conn, $lang;
     $response = array();
     $username = sanitize(trim($username));
     $password = trim($password);
+    
     if (empty($username) || empty($password)) {
         $response['success'] = false;
-        $response['message'] = 'Username/email and password are required';
+        $response['message'] = $lang['required_field']; // Reusing a general required_field message
         return $response;
     }
+    
     $isEmail = filter_var($username, FILTER_VALIDATE_EMAIL);
+    
     if ($isEmail) {
         $stmt = $conn->prepare("SELECT id, username, email, password FROM contacts_user WHERE email = ?");
     } else {
@@ -27,7 +30,7 @@ function authenticateUser($username, $password, $remember = false) {
     
     if (!$stmt) {
         $response['success'] = false;
-        $response['message'] = 'Database error occurred';
+        $response['message'] = $lang['database_error'];
         return $response;
     }
     
@@ -37,7 +40,7 @@ function authenticateUser($username, $password, $remember = false) {
     
     if ($result->num_rows === 0) {
         $response['success'] = false;
-        $response['message'] = 'Invalid username/email or password';
+        $response['message'] = $lang['login_failed'];
         $stmt->close();
         return $response;
     }
@@ -45,7 +48,7 @@ function authenticateUser($username, $password, $remember = false) {
     $user = $result->fetch_assoc();
     $stmt->close();
     
-    if (sha1($password) === $user['password']) {
+    if (password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];
@@ -67,7 +70,7 @@ function authenticateUser($username, $password, $remember = false) {
         }
         
         $response['success'] = true;
-        $response['message'] = 'Login successful! Welcome back, ' . $user['username'];
+        $response['message'] = $lang['login_success'] . ', ' . $user['username'];
         $response['user'] = [
             'id' => $user['id'],
             'username' => $user['username'],
@@ -75,7 +78,7 @@ function authenticateUser($username, $password, $remember = false) {
         ];
     } else {
         $response['success'] = false;
-        $response['message'] = 'Invalid username/email or password';
+        $response['message'] = $lang['login_failed'];
     }
     
     return $response;

@@ -10,12 +10,12 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
-    echo "<div class='alert alert-danger'>Please login to manage contacts.</div>";
+    echo "<div class='alert alert-danger'>" . $lang['please_login'] . "</div>";
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo "<div class='alert alert-danger'>Invalid request.</div>";
+    echo "<div class='alert alert-danger'>" . $lang['invalid_request'] . "</div>";
     exit;
 }
 
@@ -29,11 +29,11 @@ $numbers = $_POST['number'] ?? [];
 
 // Validate inputs
 if (empty($first_name) || empty($last_name)) {
-    echo "<div class='alert alert-danger'>First and Last names are required.</div>";
+    echo "<div class='alert alert-danger'>" . $lang['first_last_required'] . "</div>";
     exit;
 }
 if (!validate_name($first_name) || !validate_name($last_name)) {
-    echo "<div class='alert alert-danger'>Name must be alphabetic and 2-50 chars long.</div>";
+    echo "<div class='alert alert-danger'>" . $lang['name_alpha'] . "</div>";
     exit;
 }
 
@@ -42,14 +42,14 @@ foreach ($numbers as $num) {
     if (empty($num)) continue;
     $clean = clean_phone($num);
     if (!is_valid_phone($clean)) {
-        echo "<div class='alert alert-danger'>Invalid phone number format: " . htmlspecialchars($num) . "</div>";
+        echo "<div class='alert alert-danger'>" . $lang['invalid_phone'] . ' ' . htmlspecialchars($num) . "</div>";
         exit;
     }
     $clean_numbers[] = $clean;
 }
 
 if (empty($clean_numbers)) {
-    echo "<div class='alert alert-danger'>At least one valid phone number is required.</div>";
+    echo "<div class='alert alert-danger'>" . $lang['at_least_one_phone'] . "</div>";
     exit;
 }
 
@@ -64,14 +64,14 @@ if ($id > 0) {
     if ($error) {
         echo $error;
     } else {
-        echo "<div class='alert alert-success'>Contact updated successfully.</div>";
+        echo "<div class='alert alert-success'>" . $lang['contact_updated'] . "</div>";
     }
 } else {
     list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
     if ($error) {
         echo $error;
     } else {
-        echo "<div class='alert alert-success'>Contact saved successfully.</div>";
+        echo "<div class='alert alert-success'>" . $lang['contact_saved'] . "</div>";
     }
 }
 

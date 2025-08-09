@@ -1,0 +1,44 @@
+.success-alert{
+    position: absolute;
+    top: 10px;
+    z-index: 1;
+    left: 0;
+}
+#edit{
+    color: green;
+}
+.delete-alert-container{
+    background-color: rgba(111,111,111,0.2);
+    z-index: 2;
+    height: 100vh;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    backdrop-filter: blur(10px);
+    display: none;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+.delete-alert{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: whitesmoke;
+    padding: 24px 16px;
+    border-radius: 12px;
+
+}
+.sort-icon {
+    cursor: pointer;
+    margin-left: 5px;
+    color: #bbb;
+    transition: color 0.2s;
+}
+.sort-icon:hover {
+    color: #333;
+}
+.sort-icon i {
+    font-size: 1em;
+    vertical-align: middle;
+}

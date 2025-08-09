@@ -1,4 +1,10 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$lang_code = $_SESSION['lang'] ?? 'fa';
+require_once __DIR__ . '/../lang/' . $lang_code . '.php';
+
 function get_random_color() {
     $colors = ['#6f42c1', '#198754', '#0d6efd', '#fd7e14', '#dc3545', '#20c997'];
     return $colors[array_rand($colors)];
@@ -28,7 +34,6 @@ function handle_image_upload($file) {
     if (!in_array($file['type'], $allowed_types)) {
         return [null, "<div class='alert alert-danger success-alert'>Invalid image format. Only JPG, PNG, GIF allowed.</div>"];
     }
-
     $upload_dir = '../uploads/';
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0755, true);
@@ -40,23 +45,10 @@ function handle_image_upload($file) {
         return [null, "<div class='alert alert-danger success-alert'>Failed to move uploaded image.</div>"];
     }
 
-    return ['../../uploads/' . $new_name, null];
+    return ['uploads/' . $new_name, null];
 }
 
 function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $user_id) {
-    // حذف شماره‌های تکراری
-    $clean_numbers = [];
-    foreach ($numbers as $num) {
-        if (empty($num)) continue;
-        $clean = normalize_phone($num);
-        if (!is_valid_phone($clean)) {
-            echo "<div class='alert alert-danger'>Invalid phone number format: " . htmlspecialchars($num) . "</div>";
-            exit;
-        }
-        $clean_numbers[] = $clean;
-    }
-    $clean_numbers = array_unique($clean_numbers);
-    // Insert contact info
     if ($image_path !== null) {
         $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, photo_contact, user_id) VALUES (?, ?, ?, ?)");
         if ($stmt === false) {
@@ -77,7 +69,7 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
     $stmt->close();
 
     $stmt = $conn->prepare("INSERT INTO contact_numbers (contact_id, number_contact) VALUES (?, ?)");
-    foreach ($clean_numbers as $number) {
+    foreach ($numbers as $number) {
         $stmt->bind_param("is", $id, $number);
         $stmt->execute();
     }
@@ -87,18 +79,6 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
 }
 
 function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path, $user_id) {
-    // حذف شماره‌های تکراری
-    $clean_numbers = [];
-    foreach ($numbers as $num) {
-        if (empty($num)) continue;
-        $clean = normalize_phone($num);
-        if (!is_valid_phone($clean)) {
-            echo "<div class='alert alert-danger'>Invalid phone number format: " . htmlspecialchars($num) . "</div>";
-            exit;
-        }
-        $clean_numbers[] = $clean;
-    }
-    $clean_numbers = array_unique($clean_numbers);
     $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
     $check_stmt->bind_param("ii", $id, $user_id);
     $check_stmt->execute();
@@ -130,7 +110,7 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
 
     $conn->query("DELETE FROM contact_numbers WHERE contact_id = $id");
     $stmt = $conn->prepare("INSERT INTO contact_numbers (contact_id, number_contact) VALUES (?, ?)");
-    foreach ($clean_numbers as $number) {
+    foreach ($numbers as $number) {
         $stmt->bind_param("is", $id, $number);
         $stmt->execute();
     }
@@ -164,17 +144,30 @@ function delete_contact($conn, $id, $user_id) {
     return null;
 }
 
-function search_contacts($conn, $query, $user_id) {
-    $query = "%{$query}%";
+function search_contacts($conn, $query, $user_id, $limit, $offset, $sort_field = 'id_contact', $sort_direction = 'ASC') {
+    // Validate sort field to prevent SQL injection
+    $allowed_sort_fields = ['id_contact', 'firstname_contact', 'lastname_contact'];
+    if (!in_array($sort_field, $allowed_sort_fields)) {
+        $sort_field = 'id_contact'; // Default sort field
+    }
+
+    // Validate sort direction
+    $sort_direction = strtoupper($sort_direction);
+    if (!in_array($sort_direction, ['ASC', 'DESC'])) {
+        $sort_direction = 'ASC'; // Default sort direction
+    }
+
+    $query_param = "%{$query}%";
     $stmt = $conn->prepare(
         "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
          FROM contacts_info c
          LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
          WHERE (c.firstname_contact LIKE ? OR c.lastname_contact LIKE ?) AND c.user_id = ?
          GROUP BY c.id_contact
-         ORDER BY c.firstname_contact, c.lastname_contact"
+         ORDER BY $sort_field $sort_direction
+         LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("ssi", $query, $query, $user_id);
+    $stmt->bind_param("ssiii", $query_param, $query_param, $user_id, $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = [];
@@ -213,6 +206,64 @@ function get_all_contacts($conn, $user_id) {
     return $contacts;
 }
 
+function get_total_contacts($conn, $user_id) {
+    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM contacts_info WHERE user_id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row['total'];
+}
+
+function get_paginated_contacts($conn, $user_id, $limit, $offset, $sort_field = 'id_contact', $sort_direction = 'ASC') {
+    // Validate sort field to prevent SQL injection
+    $allowed_sort_fields = ['id_contact', 'firstname_contact', 'lastname_contact'];
+    if (!in_array($sort_field, $allowed_sort_fields)) {
+        $sort_field = 'id_contact'; // Default sort field
+    }
+
+    // Validate sort direction
+    $sort_direction = strtoupper($sort_direction);
+    if (!in_array($sort_direction, ['ASC', 'DESC'])) {
+        $sort_direction = 'ASC'; // Default sort direction
+    }
+
+    $sql = "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
+            FROM contacts_info c
+            LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
+            WHERE c.user_id = ?
+            GROUP BY c.id_contact
+            ORDER BY $sort_field $sort_direction
+            LIMIT ? OFFSET ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iii", $user_id, $limit, $offset);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $contacts = [];
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $row['numbers_array'] = $row['numbers'] ? explode(',', $row['numbers']) : [];
+            $contacts[] = $row;
+        }
+    }
+    $stmt->close();
+    return $contacts;
+}
+
+function get_total_contacts_search($conn, $query, $user_id) {
+    $query = "%{$query}%";
+    $stmt = $conn->prepare("SELECT COUNT(DISTINCT id_contact) AS total FROM contacts_info WHERE (firstname_contact LIKE ? OR lastname_contact LIKE ?) AND user_id = ?");
+    $stmt->bind_param("ssi", $query, $query, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row['total'];
+}
+
 function render_contact_row($contact, $index)
 {
     $id = htmlspecialchars($contact['id_contact']);
@@ -222,8 +273,8 @@ function render_contact_row($contact, $index)
 
     // Avatar Logic
     $photo_path = $contact['photo_contact'];
-    if (!empty($photo_path) && file_exists('../uploads' . $photo_path)) {
-        $avatar_html = "<img src='" . htmlspecialchars($photo_path) . "' alt='Contact Image' width='50' height='50' class='img-thumbnail rounded-circle'>";
+    if (!empty($photo_path) && file_exists('../' . $photo_path)) {
+        $avatar_html = "<img src='../" . htmlspecialchars($photo_path) . "' alt='Contact Image' width='50' height='50' class='img-thumbnail rounded-circle'>";
     } else {
         $char = strtoupper(mb_substr($fname, 0, 1));
         $color = get_random_color();

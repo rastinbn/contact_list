@@ -1,6 +1,7 @@
+// At the top of the file, inject translations from PHP
 function createUser(formData) {
     $.ajax({
-        url: "../../../modules/signup/CreatUser.php",
+        url: "../../modules/signup/CreatUser.php",
         method: "POST",
         data: formData,
         dataType: "json",
@@ -50,16 +51,16 @@ function createUser(formData) {
 function updateBarColor(width) {
     if (width > 75) {
         $(".bar").css("background-color", "darkgreen");
-        $(".password-status").html("<small class='mt-1' style='color: darkgreen'>Your password is very strong</small>");
+        $(".password-status").html(`<small class='mt-1' style='color: darkgreen'>${window.I18N['password_very_strong']}</small>`);
     } else if (width > 50) {
         $(".bar").css("background-color", "green");
-        $(".password-status").html("<small class='mt-1 text-success'>Your password is strong</small>");
+        $(".password-status").html(`<small class='mt-1 text-success'>${window.I18N['password_strong']}</small>`);
     } else if (width > 25) {
         $(".bar").css("background-color", "yellow");
-        $(".password-status").html("<small class='mt-1' style='color: #856404'>Your password is medium</small>");
+        $(".password-status").html(`<small class='mt-1' style='color: #856404'>${window.I18N['password_medium']}</small>`);
     } else if (width > 0) {
         $(".bar").css("background-color", "red");
-        $(".password-status").html("<small class='text-danger mt-1'>Your password is weak</small>");
+        $(".password-status").html(`<small class='text-danger mt-1'>${window.I18N['password_weak']}</small>`);
     } else {
         $(".bar").css("background-color", "transparent");
         $(".password-status").html("");
@@ -90,24 +91,23 @@ function showAlert(type, message) {
         </div>
     `;
     
-    // Remove any existing alerts
+
     $(".alert").remove();
     
-    // Add new alert
+
     $(".card-body").prepend(alertHtml);
-    
-    // Auto-dismiss after 8 seconds for errors, 5 seconds for success
+
     const dismissTime = type === 'danger' ? 8000 : 5000;
     setTimeout(() => {
         $(".alert").fadeOut();
     }, dismissTime);
 }
 function validateForm() {
-    const username = $("[name='username']").val().trim();
-    const email = $("[name='email']").val().trim();
+    const username = $("[name='username']").val();
+    const email = $("[name='email']").val();
     const password = $("[name='password']").val();
     const confirmPassword = $("[name='ConfirmPassword']").val();
-    // Basic validation
+
     if (!username) {
         showAlert('danger', 'Username is required');
         return false;
@@ -171,7 +171,7 @@ $(() => {
         const confirmPasswordVal = confirmPassword.val();
         
         if (passwordVal) {
-            $.post("../../../modules/signup/CheckPassword.php", {
+            $.post("../../modules/signup/CheckPassword.php", {
                 password: passwordVal,
                 ConfirmPassword: confirmPasswordVal
             }, function(response) {
@@ -183,7 +183,7 @@ $(() => {
                     animateBarWidth(width);
                     $(".bar").attr("data-width", `${width}`);
                     
-                    // Update color with delay to match animation
+
                     setTimeout(() => {
                         updateBarColor(width);
                         
@@ -193,12 +193,12 @@ $(() => {
                         }
                     }, 300);
                     
-                    // Show password match status
+                    // Password match status
                     if (passwordVal && confirmPasswordVal) {
                         if (response.passwordsMatch) {
-                            $(".password-match").html("<small class='text-success'>Passwords match</small>");
+                            $(".password-match").html(`<small class='text-success'>${window.I18N['passwords_match']}</small>`);
                         } else {
-                            $(".password-match").html("<small class='text-danger'>Passwords do not match</small>");
+                            $(".password-match").html(`<small class='text-danger'>${window.I18N['passwords_not_match']}</small>`);
                         }
                     }
                 }
@@ -215,9 +215,9 @@ $(() => {
         
         if (passwordVal && confirmPasswordVal) {
             if (passwordVal === confirmPasswordVal) {
-                $(".password-match").html("<small class='text-success'>Passwords match</small>");
+                $(".password-match").html(`<small class='text-success'>${window.I18N['passwords_match']}</small>`);
             } else {
-                $(".password-match").html("<small class='text-danger'>Passwords do not match</small>");
+                $(".password-match").html(`<small class='text-danger'>${window.I18N['passwords_not_match']}</small>`);
             }
         }
     });

@@ -1,6 +1,9 @@
+// At the top of the file, inject translations from PHP
+// ... existing code ...
+
 function loginUser(formData) {
     $.ajax({
-        url: "../../../modules/login/LoginUser.php",
+        url: "../../modules/login/LoginUser.php",
         method: "POST",
         data: formData,
         dataType: "json",
@@ -73,13 +76,13 @@ function validateForm() {
     
     // Basic validation
     if (!username) {
-        showAlert('danger', 'Username or email is required');
+        showAlert('danger', window.I18N['username_required']);
         $("[name='username']").focus();
         return false;
     }
     
     if (!password) {
-        showAlert('danger', 'Password is required');
+        showAlert('danger', window.I18N['password_required']);
         $("[name='password']").focus();
         return false;
     }
@@ -112,7 +115,7 @@ $(() => {
     $("[name='username']").on("blur", function() {
         const username = $(this).val().trim();
         if (username && username.length < 2) {
-            showAlert('danger', 'Username or email must be at least 2 characters long');
+            showAlert('danger', window.I18N['username_min_length']);
         }
     });
     

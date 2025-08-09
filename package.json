@@ -13,7 +13,6 @@
     "animate.css": "^4.1.1",
     "bootstrap": "^5.3.7",
     "jquery": "^3.7.1",
-    "tippy.js": "^6.3.7",
-    "vazirmatn": "^33.0.3"
+    "tippy.js": "^6.3.7"
   }
 }

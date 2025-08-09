@@ -4,6 +4,8 @@ require_once '../connection/config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+$lang_code = $_SESSION['lang'] ?? 'fa';
+require_once __DIR__ . '/../lang/' . $lang_code . '.php';
 
 if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
     header("Location: ../src/users/login.php");
