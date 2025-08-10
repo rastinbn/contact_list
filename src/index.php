@@ -110,5 +110,104 @@ window.I18N = <?php echo json_encode($lang, JSON_UNESCAPED_UNICODE); ?>;
 <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
 <script src="../node_modules/jquery/dist/jquery.min.js"></script>
 <script  src="js/app.js"></script>
+<script>
+    function getUserLocationAndSend() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                console.log('Latitude:', latitude, 'Longitude:', longitude);
+
+                // Send coordinates to PHP
+                $.ajax({
+                    url: '../modules/get_timezone.php',
+                    type: 'POST',
+                    data: {
+                        latitude: latitude,
+                        longitude: longitude
+                    },
+                    success: function(response) {
+                        console.log('Timezone response:', response);
+                        // Store the timezone in localStorage
+                        localStorage.setItem('userTimezone', response);
+                        // Update the navbar immediately
+                        updateNavbarTimezone(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error sending coordinates:', error);
+                    }
+                });
+            }, function(error) {
+                console.error('Error getting location:', error.message);
+                // Try to get timezone based on IP if location is denied
+                getTimezoneByIp();
+            });
+        } else {
+            console.log("Geolocation is not supported by this browser.");
+            // Try to get timezone based on IP if geolocation is not supported
+            getTimezoneByIp();
+        }
+    }
+
+    function getTimezoneByIp() {
+        $.ajax({
+            url: 'https://ipapi.co/json/',
+            type: 'GET',
+            success: function(response) {
+                if (response && response.timezone) {
+                    console.log('Timezone from IP:', response.timezone);
+                    localStorage.setItem('userTimezone', response.timezone);
+                    updateNavbarTimezone(response.timezone);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error getting timezone by IP:', error);
+            }
+        });
+    }
+
+    // Function to update the navbar with the timezone
+    function updateNavbarTimezone(timezone) {
+        $('#timezone-display').text(timezone);
+        startClock(timezone);
+    }
+
+    // Function to start the clock
+    function startClock(timezone) {
+        const clockElement = $('#current-time-display');
+        if (!clockElement.length) {
+            // Add the span for time display if it doesn't exist
+            $('#timezone-display').after('<span id="current-time-display" class="badge bg-warning ms-2"></span>');
+        }
+
+        // Clear any existing interval to prevent multiple clocks running
+        if (window.timezoneClockInterval) {
+            clearInterval(window.timezoneClockInterval);
+        }
+
+        window.timezoneClockInterval = setInterval(() => {
+            const now = new Date();
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: timezone
+            };
+            const currentTime = now.toLocaleTimeString('en-US', options);
+            $('#current-time-display').text(currentTime);
+        }, 1000);
+    }
+
+    // Call the function when the page loads
+    $(document).ready(function() {
+        const storedTimezone = localStorage.getItem('userTimezone');
+        if (storedTimezone) {
+            updateNavbarTimezone(storedTimezone);
+        }
+        getUserLocationAndSend();
+    });
+</script>
 </body>
 </html>

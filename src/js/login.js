@@ -91,12 +91,12 @@ function validateForm() {
 }
 
 $(() => {
-    // Form submission
+
     $("#submit").click(function(e) {
         e.preventDefault();
         
         if (validateForm()) {
-            // Disable submit button
+
             $("#submit").prop('disabled', true).text('Logging in...');
             
             const formData = $("#LoginForm").serialize();
@@ -104,14 +104,13 @@ $(() => {
         }
     });
     
-    // Enter key submission
+
     $("#LoginForm").on('keypress', function(e) {
-        if (e.which === 13) { // Enter key
+        if (e.which === 13) {
             $("#submit").click();
         }
     });
-    
-    // Real-time validation
+
     $("[name='username']").on("blur", function() {
         const username = $(this).val().trim();
         if (username && username.length < 2) {
@@ -119,11 +118,11 @@ $(() => {
         }
     });
     
-    // Clear alerts when user starts typing
+
     $("input").on("input", function() {
         $(".alert").fadeOut();
     });
     
-    // Focus on username field when page loads
+
     $("[name='username']").focus();
 }); 

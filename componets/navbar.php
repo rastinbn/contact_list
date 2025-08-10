@@ -42,6 +42,7 @@ require_once __DIR__ . '/../lang/' . $lang_code . '.php';
                 <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
                     <span class="navbar-text me-3">
                         <?= $lang['welcome'] ?>, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>!
+                        <span id="timezone-display" class="badge bg-info"></span>
                     </span>
                     <a href="../modules/login/LogoutUser.php" class="btn btn-outline-danger"><?= $lang['logout'] ?></a>
                 <?php else: ?>

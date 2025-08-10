@@ -226,7 +226,7 @@ function get_paginated_contacts($conn, $user_id, $limit, $offset, $sort_field = 
     // Validate sort direction
     $sort_direction = strtoupper($sort_direction);
     if (!in_array($sort_direction, ['ASC', 'DESC'])) {
-        $sort_direction = 'ASC'; // Default sort direction
+        $sort_direction = 'ASC';
     }
 
     $sql = "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
@@ -252,7 +252,6 @@ function get_paginated_contacts($conn, $user_id, $limit, $offset, $sort_field = 
     $stmt->close();
     return $contacts;
 }
-
 function get_total_contacts_search($conn, $query, $user_id) {
     $query = "%{$query}%";
     $stmt = $conn->prepare("SELECT COUNT(DISTINCT id_contact) AS total FROM contacts_info WHERE (firstname_contact LIKE ? OR lastname_contact LIKE ?) AND user_id = ?");
@@ -263,7 +262,6 @@ function get_total_contacts_search($conn, $query, $user_id) {
     $stmt->close();
     return $row['total'];
 }
-
 function render_contact_row($contact, $index)
 {
     $id = htmlspecialchars($contact['id_contact']);
@@ -281,8 +279,6 @@ function render_contact_row($contact, $index)
         $avatar_html = "<div class='rounded-circle text-white text-center d-flex justify-content-center align-items-center' 
                         style='background-color:{$color};width:50px;height:50px;font-size:1.2rem;font-weight:bold;'>{$char}</div>";
     }
-
-    // Social Media Icons
     $social_media_html = '';
     if (!empty($contact['numbers_array']) && !empty($contact['numbers_array'][0])) {
         $first_number = $contact['numbers_array'][0];
