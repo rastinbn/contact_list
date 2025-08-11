@@ -29,6 +29,8 @@ A modern, feature-rich contact management web application built with PHP, MySQL,
 - **Animated Elements**: Smooth animations and transitions
 - **Interactive Feedback**: Real-time password strength indicators
 - **Toast Notifications**: User-friendly success/error messages
+- **Multi-language Support**: Seamless switching between English and Persian (Farsi) languages
+- **Dynamic Navbar**: Enhanced navigation bar with improved functionality and display.
 
 ## 🛠️ Technology Stack
 
@@ -50,6 +52,7 @@ Before running this application, make sure you have:
 - **PHP 7.4** or higher
 - **MySQL 5.7** or higher
 - **Web browser** with JavaScript enabled
+- **Timezone API**: Integration for dynamic timezone updates.
 
 ## 🚀 Installation
 
@@ -64,6 +67,7 @@ cd contact_list
 2. Open phpMyAdmin: `http://localhost/phpmyadmin`
 3. Create a new database named `contacts_db`
 4. Import the database schema (if provided) or the application will create tables automatically
+5. **Important**: Ensure your MySQL server's `time_zone` setting is correctly configured, or handle timezones within the application.
 
 ### Step 3: Configuration
 1. Navigate to `connection/config.php`
@@ -92,34 +96,51 @@ contact_list/
 ├── common/
 │   └── passwordstrange.php          # Password strength utilities
 ├── components/
-│   └── navbar.php                   # Navigation component
+│   ├── navbar.php                   # Navigation component (English)
+│   └── navbarfa.php                 # Navigation component (Persian)
 ├── connection/
 │   └── config.php                   # Database configuration
+├── database/
+│   └── contacts_db (1).sql          # Initial database schema
+├── lang/
+│   ├── en.php                       # English language translations
+│   └── fa.php                       # Persian (Farsi) language translations
 ├── modules/
-│   ├── signup/
-│   │   ├── CheckPassword.php        # Password validation
-│   │   └── CreatUser.php           # User creation
 │   ├── delete.php                   # Contact deletion
 │   ├── export.php                   # CSV export functionality
 │   ├── function.php                 # Core functions
+│   ├── get_timezone.php             # Server-side timezone retrieval
+│   ├── get_timezone.py              # Python script for timezone handling (if used)
 │   ├── import.php                   # CSV import functionality
 │   ├── load.php                     # Data loading
+│   ├── login/
+│   │   ├── LoginUser.php           # User login logic
+│   │   └── LogoutUser.php          # User logout logic
 │   ├── save.php                     # Contact saving
 │   ├── search.php                   # Search functionality
-│   └── security.php                 # Security utilities
+│   ├── security.php                 # Security utilities
+│   └── signup/
+│       ├── CheckPassword.php        # Password validation
+│       └── CreatUser.php           # User creation
+├── package-lock.json                # Node.js dependency lock file
+├── package.json                     # Node.js dependencies
+├── Readme.md                        # This file
 ├── src/
 │   ├── css/
+│   │   ├── login.css               # Login page styles
 │   │   ├── signup.css              # Signup page styles
 │   │   └── styles.css              # Main application styles
+│   ├── index.php                   # Main application page
 │   ├── js/
 │   │   ├── app.js                  # Main application logic
-│   │   └── signup.js               # Signup page logic
+│   │   ├── login.js                # Login page logic
+│   │   ├── signup.js               # Signup page logic
+│   │   └── timezone_updater.js     # JavaScript for timezone updates
 │   ├── users/
+│   │   ├── login.php               # User login page
 │   │   └── signup.php              # User registration page
 │   └── index.php                   # Main application page
 ├── uploads/                         # Contact image uploads
-├── package.json                     # Node.js dependencies
-└── README.md                       # This file
 ```
 
 ## 🎯 Usage Guide
