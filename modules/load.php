@@ -39,7 +39,7 @@ $contacts = get_paginated_contacts($conn, $user_id, $records_per_page, $offset, 
 // }
 
 echo json_encode([
-    'contacts' => $contacts, // Return raw contacts data
+    'contacts' => $contacts,
     'total_pages' => $total_pages
 ]);
 

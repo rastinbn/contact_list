@@ -1,24 +1,37 @@
 <?php
 header('Content-Type: application/json');
 
-if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
-    $latitude = escapeshellarg($_POST['latitude']);
-    $longitude = escapeshellarg($_POST['longitude']);
+$latitude = $_POST['latitude'] ?? null;
+$longitude = $_POST['longitude'] ?? null;
 
-    // Path to your Python executable and script
-    $python_executable = 'python'; // Or 'python3', or the full path like '/usr/bin/python3'
-    $python_script = __DIR__ . '/get_timezone.py';
-
-    // Execute the Python script
-    $command = "$python_executable $python_script $latitude $longitude";
-    $timezone = shell_exec($command);
-
-    if ($timezone !== null) {
-        echo trim($timezone);
-    } else {
-        echo json_encode(['error' => 'Failed to get timezone from Python.']);
-    }
-} else {
-    echo json_encode(['error' => 'Latitude and Longitude not provided.']);
+if (!$latitude || !$longitude) {
+    echo json_encode(['error' => 'Missing latitude or longitude']);
+    exit;
 }
-?>
+
+$pythonScript = __DIR__ . '/get_timezone.py';
+
+// ساخت دستور امن
+$command = escapeshellcmd("python \"$pythonScript\" $latitude $longitude");
+
+
+exec($command, $output, $return_var);
+
+
+$outputString = implode("\n", $output);
+
+if ($return_var !== 0) {
+    echo json_encode(['error' => "Python script error: $outputString"]);
+    exit;
+}
+
+// سعی کن خروجی رو decode کنی
+$jsonData = json_decode($outputString, true);
+
+if ($jsonData === null) {
+    echo json_encode(['error' => 'Invalid JSON from Python script', 'raw_output' => $outputString]);
+    exit;
+}
+
+// در نهایت JSON معتبر برگشت بده
+echo json_encode($jsonData);

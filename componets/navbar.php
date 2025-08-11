@@ -13,6 +13,7 @@ require_once __DIR__ . '/../lang/' . $lang_code . '.php';
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title><?= $lang['app_title'] ?></title>
+    <script src="js/timezone_updater.js" defer></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -42,7 +43,10 @@ require_once __DIR__ . '/../lang/' . $lang_code . '.php';
                 <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
                     <span class="navbar-text me-3">
                         <?= $lang['welcome'] ?>, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>!
-                        <span id="timezone-display" class="badge bg-info"></span>
+                     <span id="timezone-display"><?= $lang['timezone'] ?></span>
+                        <span id="current-time-display"><?= $lang['time'] ?></span>
+                        <span id="city-display"></span>
+                        <span id="country-display"></span>
                     </span>
                     <a href="../modules/login/LogoutUser.php" class="btn btn-outline-danger"><?= $lang['logout'] ?></a>
                 <?php else: ?>

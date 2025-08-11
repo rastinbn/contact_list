@@ -91,4 +91,6 @@ $lang = [
     'sort_by_first_name' => 'Sort by First Name',
     'sort_by_last_name' => 'Sort by Last Name',
     'sort_by_label' => 'Sort By',
+    'time'=>'time:',
+    'timezone'=>'timezone:',
 ]; 

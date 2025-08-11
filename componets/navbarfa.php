@@ -11,7 +11,7 @@ if (session_status() === PHP_SESSION_NONE) {
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-
+    <script src="js/timezone_updater.js" defer></script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -32,6 +32,8 @@ if (session_status() === PHP_SESSION_NONE) {
                 <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']): ?>
                     <span class="navbar-text me-3">
                         خوش آمدید, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>!
+                        <span id="timezone-display" class="badge bg-info"></span>
+                        <span id="current-time-display" class="badge bg-secondary"></span>
                     </span>
                     <a href="../modules/login/LogoutUser.php" class="btn btn-outline-danger">خروج</a>
                 <?php else: ?>
