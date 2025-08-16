@@ -43,6 +43,7 @@ A modern, feature-rich contact management web application built with PHP, MySQL,
   - Animate.css 4.1.1
   - Tippy.js 6.3.7
 - **Server**: Apache/Nginx (XAMPP recommended)
+- **Python Web Service**: Flask, timezonefinder, pytz
 
 ## 📋 Prerequisites
 
@@ -51,8 +52,8 @@ Before running this application, make sure you have:
 - **XAMPP** or similar local server environment
 - **PHP 7.4** or higher
 - **MySQL 5.7** or higher
+- **Python 3.x**
 - **Web browser** with JavaScript enabled
-- **Timezone API**: Integration for dynamic timezone updates.
 
 ## 🚀 Installation
 
@@ -82,9 +83,17 @@ $dbname = "contacts_db";
 ### Step 4: Install Dependencies
 ```bash
 npm install
+pip install Flask timezonefinder pytz
 ```
 
-### Step 5: Access the Application
+### Step 5: Run the Python Timezone Service
+Before running the PHP application, you need to start the Python web service. Open a new terminal in the project root directory (`contact_list/`) and run:
+```bash
+python timezone_service.py
+```
+This service will run on `http://127.0.0.1:5000`.
+
+### Step 6: Access the Application
 1. Place the project in your XAMPP `htdocs` folder
 2. Open your browser and navigate to: `http://localhost/contact_list/src/`
 3. For signup page: `http://localhost/contact_list/src/users/signup.php`
@@ -110,7 +119,7 @@ contact_list/
 │   ├── export.php                   # CSV export functionality
 │   ├── function.php                 # Core functions
 │   ├── get_timezone.php             # Server-side timezone retrieval
-│   ├── get_timezone.py              # Python script for timezone handling (if used)
+│   ├── get_timezone.py              # Python script for timezone handling (Legacy - now uses web service)
 │   ├── import.php                   # CSV import functionality
 │   ├── load.php                     # Data loading
 │   ├── login/
@@ -140,6 +149,7 @@ contact_list/
 │   │   ├── login.php               # User login page
 │   │   └── signup.php              # User registration page
 │   └── index.php                   # Main application page
+├── timezone_service.py              # Python Flask web service for timezone conversion
 ├── uploads/                         # Contact image uploads
 ```
 
