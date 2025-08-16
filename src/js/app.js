@@ -27,6 +27,13 @@ function showform(id = '', fname = '', lname = '', numbers = []) {
             </div>
         `);
     });
+
+    // Clear previously selected users
+    selectedUsers = [];
+    $('#selected_users_display').empty();
+    $('#shared_with_users_hidden').val('');
+
+
 }
 $(document).on('click', '#add-number', function () {
     const newField = `
@@ -136,6 +143,55 @@ function renderContactsTable(data) {
     $("#table_body").html(html);
 }
 
+let selectedUsers = []; // Global array to store selected users for sharing
+
+function searchUsers(query) {
+    if (query.length < 2) {
+        $('#search_results').empty();
+        return;
+    }
+    $.get('../modules/search_users.php', { query: query }, function (data) {
+        let resultsHtml = '';
+        if (data.length > 0) {
+            data.forEach(user => {
+                // Only show users not already selected
+                if (!selectedUsers.some(selected => selected.id === user.id)) {
+                    resultsHtml += `<a href="#" class="list-group-item list-group-item-action search-result-item" data-id="${user.id}" data-username="${user.username}">${user.username} (${user.email})</a>`;
+                }
+            });
+        } else {
+            resultsHtml = `<div class="list-group-item">${window.I18N['no_users_found'] ?? 'No users found.'}</div>`;
+        }
+        $('#search_results').html(resultsHtml);
+    });
+}
+
+function addSelectedUser(id, username) {
+    selectedUsers.push({ id: id, username: username });
+    renderSelectedUsers();
+}
+
+function removeSelectedUser(id) {
+    selectedUsers = selectedUsers.filter(user => user.id !== id);
+    renderSelectedUsers();
+}
+
+function renderSelectedUsers() {
+    let displayHtml = '';
+    let hiddenInputVal = '';
+    selectedUsers.forEach(user => {
+        displayHtml += `<span class="badge bg-primary text-white me-1 mb-1 p-2">${user.username} <i class="fa fa-times-circle remove-selected-user" data-id="${user.id}" style="cursor:pointer;"></i></span>`;
+        hiddenInputVal += `<input type="hidden" name="shared_with_users[]" value="${user.id}">`;
+    });
+    $('#selected_users_display').html(displayHtml);
+    // Update the hidden input that actually gets submitted with the form
+    $('#shared_with_users_hidden').html(hiddenInputVal);
+
+    // Clear search results and input after selection
+    $('#search_users_input').val('');
+    $('#search_results').empty();
+}
+
 function fileExists(url) {
     var http = new XMLHttpRequest();
     http.open('HEAD', url, false);
@@ -174,6 +230,8 @@ $(document).ready(function () {
         $("#show_contacts").show();
         $("#form1")[0].reset();
         $("#form_title").text('');
+        selectedUsers = []; // Clear selected users on cancel
+        renderSelectedUsers(); // Update display
     });
     $("input[name='search']").on("input", function () {
         const query = $(this).val().trim();
@@ -190,6 +248,10 @@ $(document).ready(function () {
 
         // Use FormData to handle file uploads
         var formData = new FormData(this);
+        // Add selected shared user IDs to formData
+        selectedUsers.forEach(user => {
+            formData.append('shared_with_users[]', user.id);
+        });
 
         $.ajax({
             url: url,
@@ -221,6 +283,12 @@ $(document).ready(function () {
         const numbers = JSON.parse($(this).attr('data-numbers'));
         showform(id, fname, lname, numbers);
         $("#action").val("save");
+
+        // Fetch and display shared users when editing
+        $.get('../modules/get_shared_users.php', { contact_id: id }, function(data) {
+            selectedUsers = data; // Assuming data is an array of {id, username}
+            renderSelectedUsers();
+        });
     });
     $(document).on('click', '.delete-btn', function () {
         const id = $(this).data('id');
@@ -275,5 +343,27 @@ $(document).ready(function () {
                 loadContacts(currentPage, recordsPerPage, currentSort.field, currentSort.direction); // Reload all data with current sort
             }
         }
+    });
+
+    // User search and selection logic
+    let searchTimeout;
+    $('#search_users_input').on('input', function() {
+        clearTimeout(searchTimeout);
+        const query = $(this).val();
+        searchTimeout = setTimeout(() => {
+            searchUsers(query);
+        }, 300); // Debounce for 300ms
+    });
+
+    $(document).on('click', '.search-result-item', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const username = $(this).data('username');
+        addSelectedUser(id, username);
+    });
+
+    $(document).on('click', '.remove-selected-user', function() {
+        const id = $(this).data('id');
+        removeSelectedUser(id);
     });
 });

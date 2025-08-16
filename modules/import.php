@@ -21,7 +21,6 @@ function clean_phone_number($number) {
     $number = preg_replace('/[^\d]/', '', $number);
     return $number;
 }
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     $file_tmp = $_FILES['csv_file']['tmp_name'];
     if (($handle = fopen($file_tmp, "r")) !== FALSE) {

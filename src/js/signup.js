@@ -75,7 +75,6 @@ function animateBarWidth(newWidth) {
         easing: "swing"
     });
 }
-
 function addPulseEffect() {
     $(".bar").addClass("pulse-animation");
     setTimeout(() => {

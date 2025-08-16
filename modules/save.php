@@ -26,6 +26,15 @@ $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 $first_name = clean_input($_POST['first_name'] ?? '', 50);
 $last_name = clean_input($_POST['last_name'] ?? '', 50);
 $numbers = $_POST['number'] ?? [];
+$shared_with_users = [];
+if (isset($_POST['shared_with_users']) && is_array($_POST['shared_with_users'])) {
+    foreach ($_POST['shared_with_users'] as $shared_user_id) {
+        $shared_user_id = intval($shared_user_id);
+        if ($shared_user_id > 0) {
+            $shared_with_users[] = $shared_user_id;
+        }
+    }
+}
 
 // Validate inputs
 if (empty($first_name) || empty($last_name)) {
@@ -60,14 +69,14 @@ if ($error) {
 }
 
 if ($id > 0) {
-    $error = update_contact($conn, $id, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
+    $error = update_contact($conn, $id, $first_name, $last_name, $clean_numbers, $image_path, $user_id, $shared_with_users);
     if ($error) {
         echo $error;
     } else {
         echo "<div class='alert alert-success'>" . $lang['contact_updated'] . "</div>";
     }
 } else {
-    list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path, $user_id);
+    list($new_id, $error) = save_contact($conn, $first_name, $last_name, $clean_numbers, $image_path, $user_id, $shared_with_users);
     if ($error) {
         echo $error;
     } else {

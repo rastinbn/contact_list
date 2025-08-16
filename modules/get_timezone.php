@@ -9,29 +9,30 @@ if (!$latitude || !$longitude) {
     exit;
 }
 
-$pythonScript = __DIR__ . '/get_timezone.py';
+$pythonServiceUrl = "http://127.0.0.1:5000/get_timezone?latitude=" . $latitude . "&longitude=" . $longitude;
 
-// ساخت دستور امن
-$command = escapeshellcmd("python \"$pythonScript\" $latitude $longitude");
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $pythonServiceUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
 
-
-exec($command, $output, $return_var);
-
-
-$outputString = implode("\n", $output);
-
-if ($return_var !== 0) {
-    echo json_encode(['error' => "Python script error: $outputString"]);
+if ($response === false) {
+    echo json_encode(['error' => 'Failed to connect to Python service.']);
     exit;
 }
 
-// سعی کن خروجی رو decode کنی
-$jsonData = json_decode($outputString, true);
+$jsonData = json_decode($response, true);
 
 if ($jsonData === null) {
-    echo json_encode(['error' => 'Invalid JSON from Python script', 'raw_output' => $outputString]);
+    echo json_encode(['error' => 'Invalid JSON response from Python service', 'raw_output' => $response]);
     exit;
 }
 
-// در نهایت JSON معتبر برگشت بده
+if ($httpCode !== 200) {
+    echo json_encode(['error' => 'Python service error', 'details' => $jsonData['error'] ?? 'Unknown error']);
+    exit;
+}
+
 echo json_encode($jsonData);

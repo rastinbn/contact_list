@@ -93,4 +93,7 @@ $lang = [
     'sort_by_label' => 'Sort By',
     'time'=>'time:',
     'timezone'=>'timezone:',
+    'share_contact_with' => 'Share Contact With:',
+    'search_users' => 'Search Users...',
+    'shared_with' => 'Shared with'
 ]; 

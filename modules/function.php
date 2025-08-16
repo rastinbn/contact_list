@@ -48,7 +48,7 @@ function handle_image_upload($file) {
     return ['uploads/' . $new_name, null];
 }
 
-function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $user_id) {
+function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $user_id, $shared_user_ids = []) {
     if ($image_path !== null) {
         $stmt = $conn->prepare("INSERT INTO contacts_info (firstname_contact, lastname_contact, photo_contact, user_id) VALUES (?, ?, ?, ?)");
         if ($stmt === false) {
@@ -75,10 +75,19 @@ function save_contact($conn, $first_name, $last_name, $numbers, $image_path, $us
     }
     $stmt->close();
 
+    // Insert into contact_shares table
+    if (!empty($shared_user_ids)) {
+        $stmt_share = $conn->prepare("INSERT IGNORE INTO contact_shares (contact_id, shared_with_user_id) VALUES (?, ?)");
+        foreach ($shared_user_ids as $shared_user_id) {
+            $stmt_share->bind_param("ii", $id, $shared_user_id);
+            $stmt_share->execute();
+        }
+        $stmt_share->close();
+    }
     return [$id, null];
 }
 
-function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path, $user_id) {
+function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_path, $user_id, $shared_user_ids = []) {
     $check_stmt = $conn->prepare("SELECT id_contact FROM contacts_info WHERE id_contact = ? AND user_id = ?");
     $check_stmt->bind_param("ii", $id, $user_id);
     $check_stmt->execute();
@@ -116,6 +125,17 @@ function update_contact($conn, $id, $first_name, $last_name, $numbers, $image_pa
     }
     $stmt->close();
 
+    // Update contact_shares table
+    $conn->query("DELETE FROM contact_shares WHERE contact_id = $id");
+    if (!empty($shared_user_ids)) {
+        $stmt_share = $conn->prepare("INSERT IGNORE INTO contact_shares (contact_id, shared_with_user_id) VALUES (?, ?)");
+        foreach ($shared_user_ids as $shared_user_id) {
+            $stmt_share->bind_param("ii", $id, $shared_user_id);
+            $stmt_share->execute();
+        }
+        $stmt_share->close();
+    }
+
     return null;
 }
 
@@ -145,29 +165,31 @@ function delete_contact($conn, $id, $user_id) {
 }
 
 function search_contacts($conn, $query, $user_id, $limit, $offset, $sort_field = 'id_contact', $sort_direction = 'ASC') {
-    // Validate sort field to prevent SQL injection
     $allowed_sort_fields = ['id_contact', 'firstname_contact', 'lastname_contact'];
     if (!in_array($sort_field, $allowed_sort_fields)) {
-        $sort_field = 'id_contact'; // Default sort field
+        $sort_field = 'id_contact';
     }
 
-    // Validate sort direction
+
     $sort_direction = strtoupper($sort_direction);
     if (!in_array($sort_direction, ['ASC', 'DESC'])) {
-        $sort_direction = 'ASC'; // Default sort direction
+        $sort_direction = 'ASC';
     }
 
     $query_param = "%{$query}%";
     $stmt = $conn->prepare(
-        "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
+        "SELECT DISTINCT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers,
+                GROUP_CONCAT(DISTINCT JSON_OBJECT('id', cu.id, 'username', cu.username) SEPARATOR ';;') AS shared_users_json
          FROM contacts_info c
          LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
-         WHERE (c.firstname_contact LIKE ? OR c.lastname_contact LIKE ?) AND c.user_id = ?
+         LEFT JOIN contact_shares cs ON c.id_contact = cs.contact_id
+         LEFT JOIN contacts_user cu ON cs.shared_with_user_id = cu.id
+         WHERE (c.firstname_contact LIKE ? OR c.lastname_contact LIKE ?) AND (c.user_id = ? OR cs.shared_with_user_id = ?)
          GROUP BY c.id_contact
          ORDER BY $sort_field $sort_direction
          LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("ssiii", $query_param, $query_param, $user_id, $limit, $offset);
+    $stmt->bind_param("ssiiii", $query_param, $query_param, $user_id, $user_id, $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = [];
@@ -175,6 +197,16 @@ function search_contacts($conn, $query, $user_id, $limit, $offset, $sort_field =
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $row['numbers_array'] = $row['numbers'] ? explode(',', $row['numbers']) : [];
+            $row['shared_with_users'] = [];
+            if (!empty($row['shared_users_json'])) {
+                $shared_users_raw = explode(';;', $row['shared_users_json']);
+                foreach ($shared_users_raw as $user_json) {
+                    $decoded_user = json_decode($user_json, true);
+                    if ($decoded_user !== null) {
+                        $row['shared_with_users'][] = $decoded_user;
+                    }
+                }
+            }
             $contacts[] = $row;
         }
     }
@@ -183,15 +215,18 @@ function search_contacts($conn, $query, $user_id, $limit, $offset, $sort_field =
 }
 
 function get_all_contacts($conn, $user_id) {
-    $sql = "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
+    $sql = "SELECT DISTINCT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers,
+            GROUP_CONCAT(DISTINCT JSON_OBJECT('id', cu.id, 'username', cu.username) SEPARATOR ';;') AS shared_users_json
             FROM contacts_info c
             LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
-            WHERE c.user_id = ?
+            LEFT JOIN contact_shares cs ON c.id_contact = cs.contact_id
+            LEFT JOIN contacts_user cu ON cs.shared_with_user_id = cu.id
+            WHERE c.user_id = ? OR cs.shared_with_user_id = ?
             GROUP BY c.id_contact
             ORDER BY c.firstname_contact, c.lastname_contact";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bind_param("ii", $user_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = [];
@@ -199,6 +234,16 @@ function get_all_contacts($conn, $user_id) {
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $row['numbers_array'] = $row['numbers'] ? explode(',', $row['numbers']) : [];
+            $row['shared_with_users'] = [];
+            if (!empty($row['shared_users_json'])) {
+                $shared_users_raw = explode(';;', $row['shared_users_json']);
+                foreach ($shared_users_raw as $user_json) {
+                    $decoded_user = json_decode($user_json, true);
+                    if ($decoded_user !== null) {
+                        $row['shared_with_users'][] = $decoded_user;
+                    }
+                }
+            }
             $contacts[] = $row;
         }
     }
@@ -207,8 +252,8 @@ function get_all_contacts($conn, $user_id) {
 }
 
 function get_total_contacts($conn, $user_id) {
-    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM contacts_info WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
+    $stmt = $conn->prepare("SELECT COUNT(DISTINCT c.id_contact) AS total FROM contacts_info c LEFT JOIN contact_shares cs ON c.id_contact = cs.contact_id WHERE c.user_id = ? OR cs.shared_with_user_id = ?");
+    $stmt->bind_param("ii", $user_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
@@ -229,16 +274,19 @@ function get_paginated_contacts($conn, $user_id, $limit, $offset, $sort_field = 
         $sort_direction = 'ASC';
     }
 
-    $sql = "SELECT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers
+    $sql = "SELECT DISTINCT c.id_contact, c.firstname_contact, c.lastname_contact, c.photo_contact, GROUP_CONCAT(n.number_contact) AS numbers,
+            GROUP_CONCAT(DISTINCT JSON_OBJECT('id', cu.id, 'username', cu.username) SEPARATOR ';;') AS shared_users_json
             FROM contacts_info c
             LEFT JOIN contact_numbers n ON c.id_contact = n.contact_id
-            WHERE c.user_id = ?
+            LEFT JOIN contact_shares cs ON c.id_contact = cs.contact_id
+            LEFT JOIN contacts_user cu ON cs.shared_with_user_id = cu.id
+            WHERE c.user_id = ? OR cs.shared_with_user_id = ?
             GROUP BY c.id_contact
             ORDER BY $sort_field $sort_direction
             LIMIT ? OFFSET ?";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iii", $user_id, $limit, $offset);
+    $stmt->bind_param("iiii", $user_id, $user_id, $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = [];
@@ -246,6 +294,16 @@ function get_paginated_contacts($conn, $user_id, $limit, $offset, $sort_field = 
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $row['numbers_array'] = $row['numbers'] ? explode(',', $row['numbers']) : [];
+            $row['shared_with_users'] = [];
+            if (!empty($row['shared_users_json'])) {
+                $shared_users_raw = explode(';;', $row['shared_users_json']);
+                foreach ($shared_users_raw as $user_json) {
+                    $decoded_user = json_decode($user_json, true);
+                    if ($decoded_user !== null) {
+                        $row['shared_with_users'][] = $decoded_user;
+                    }
+                }
+            }
             $contacts[] = $row;
         }
     }
@@ -254,8 +312,8 @@ function get_paginated_contacts($conn, $user_id, $limit, $offset, $sort_field = 
 }
 function get_total_contacts_search($conn, $query, $user_id) {
     $query = "%{$query}%";
-    $stmt = $conn->prepare("SELECT COUNT(DISTINCT id_contact) AS total FROM contacts_info WHERE (firstname_contact LIKE ? OR lastname_contact LIKE ?) AND user_id = ?");
-    $stmt->bind_param("ssi", $query, $query, $user_id);
+    $stmt = $conn->prepare("SELECT COUNT(DISTINCT c.id_contact) AS total FROM contacts_info c LEFT JOIN contact_shares cs ON c.id_contact = cs.contact_id WHERE (c.firstname_contact LIKE ? OR c.lastname_contact LIKE ?) AND (c.user_id = ? OR cs.shared_with_user_id = ?)");
+    $stmt->bind_param("ssii", $query, $query, $user_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
@@ -268,6 +326,15 @@ function render_contact_row($contact, $index)
     $fname = htmlspecialchars($contact['firstname_contact']);
     $lname = htmlspecialchars($contact['lastname_contact']);
     $numbers_json = htmlspecialchars(json_encode($contact['numbers_array']), ENT_QUOTES, 'UTF-8');
+    $shared_with_users = $contact['shared_with_users'] ?? [];
+    $shared_users_display = '';
+    if (!empty($shared_with_users)) {
+        $shared_users_display = '<small class="text-muted">' . $lang['shared_with'] . ': ';
+        foreach ($shared_with_users as $shared_user_info) {
+            $shared_users_display .= htmlspecialchars($shared_user_info['username']) . ', ';
+        }
+        $shared_users_display = rtrim($shared_users_display, ', ') . '</small>';
+    }
 
     // Avatar Logic
     $photo_path = $contact['photo_contact'];
@@ -306,7 +373,7 @@ function render_contact_row($contact, $index)
             <td class='align-middle'>{$fname}</td>
             <td class='align-middle'>{$lname}</td>
             <td class='align-middle'>{$numbers_html}</td>
-            <td class='align-middle'>{$social_media_html}</td>
+            <td class='align-middle'>{$social_media_html} {$shared_users_display}</td>
             <td class='align-middle'>{$actions_html}</td>
         </tr>
     ";

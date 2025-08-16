@@ -82,6 +82,15 @@ if (!isset($_SESSION['user_id']) || !$_SESSION['logged_in']) {
                 <label><?= $lang['numbers'] ?>:</label>
                 <div id="number-fields"></div>
                 <button type="button" id="add-number" class="btn btn-sm btn-info mt-1"><?= $lang['add_number'] ?></button>
+                
+                <div class="mt-3">
+                    <label><?= $lang['share_contact_with'] ?>:</label>
+                    <input type="text" class="form-control" id="search_users_input" placeholder="<?= $lang['search_users'] ?>">
+                    <div id="search_results" class="list-group mt-2"></div>
+                    <div id="selected_users_display" class="mt-2 d-flex flex-wrap gap-2">
+                    </div>
+                    <input type="hidden" name="shared_with_users[]" id="shared_with_users_hidden">
+                </div>
             </form>
         </div>
         <div class="card-footer">

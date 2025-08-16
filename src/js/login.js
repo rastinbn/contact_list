@@ -1,5 +1,3 @@
-// At the top of the file, inject translations from PHP
-// ... existing code ...
 
 function loginUser(formData) {
     $.ajax({
@@ -9,34 +7,32 @@ function loginUser(formData) {
         dataType: "json",
         success: function(response) {
             if (response.success) {
-                // Show success message
+     
                 showAlert('success', response.message);
                 
-                // Redirect to main page after 1.5 seconds
+          
                 setTimeout(() => {
                     window.location.href = '../index.php';
                 }, 1500);
             } else {
-                // Show error message
+        
                 showAlert('danger', response.message);
             }
-            
-            // Re-enable submit button
+ 
             $("#submit").prop('disabled', false).text('Login');
         },
         error: function(xhr, status, error) {
             console.error('AJAX Error:', xhr.responseText);
             
             let errorMessage = 'An error occurred. Please try again.';
-            
-            // Try to parse error response
+     
             try {
                 const response = JSON.parse(xhr.responseText);
                 if (response.message) {
                     errorMessage = response.message;
                 }
             } catch (e) {
-                // If not JSON, show the raw response
+            
                 if (xhr.responseText) {
                     errorMessage = 'Server Error: ' + xhr.responseText.substring(0, 100);
                 }
@@ -44,7 +40,7 @@ function loginUser(formData) {
             
             showAlert('danger', errorMessage);
             
-            // Re-enable submit button
+        
             $("#submit").prop('disabled', false).text('Login');
         }
     });
@@ -58,13 +54,13 @@ function showAlert(type, message) {
         </div>
     `;
     
-    // Remove any existing alerts
+    
     $(".alert").remove();
     
-    // Add new alert
+  
     $(".card-body").prepend(alertHtml);
     
-    // Auto-dismiss after 5 seconds
+
     setTimeout(() => {
         $(".alert").fadeOut();
     }, 5000);
@@ -74,7 +70,7 @@ function validateForm() {
     const username = $("[name='username']").val().trim();
     const password = $("[name='password']").val();
     
-    // Basic validation
+
     if (!username) {
         showAlert('danger', window.I18N['username_required']);
         $("[name='username']").focus();
